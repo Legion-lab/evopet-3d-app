@@ -22,9 +22,31 @@ export default function App() {
     );
     camera.position.z = 5;
 
-    // Ambient Light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.0); // Soft white light
+    // --- Task T-03: Add Red Sphere ---
+    // Geometry: Sphere with radius 1.5
+    const geometry = new THREE.SphereGeometry(1.5, 32, 32);
+    // Material: Standard material, red color
+    const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+    // Mesh: Combine geometry and material
+    const sphere = new THREE.Mesh(geometry, material);
+    sphere.position.set(0, 0, 0);
+    scene.add(sphere);
+
+    // --- Task T-03: Modify Lighting ---
+    // Ambient Light (soft base lighting)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
+
+    // Directional Light (strong directional source for shadows/shading)
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    directionalLight.position.set(5, 5, 5);
+    scene.add(directionalLight);
+
+    // Point Light (local light source for highlights/depth)
+    const pointLight = new THREE.PointLight(0xffffff, 1.0);
+    pointLight.position.set(-5, 5, 5);
+    scene.add(pointLight);
+
 
     // Render loop
     const render = () => {
