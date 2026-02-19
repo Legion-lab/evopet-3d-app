@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { GLView } from 'expo-gl';
 import { Renderer } from 'expo-three';
 import * as THREE from 'three';
@@ -104,6 +104,37 @@ export default function App() {
         <View style={{ height: 20, backgroundColor: '#333', borderRadius: 10, marginBottom: 10 }}>
           <View style={{ width: `${happiness}%`, height: '100%', backgroundColor: 'green', borderRadius: 10 }} />
         </View>
+      </View>
+
+      {/* Action Buttons */}
+      <View style={{ position: 'absolute', bottom: 30, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-evenly', zIndex: 1 }}>
+        <TouchableOpacity
+          onPress={() => setHunger(prev => Math.min(prev + 20, 100))}
+          style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8 }}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>Nakarm</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setEnergy(prev => Math.min(prev + 20, 100))}
+          style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8 }}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>Sen</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setHygiene(prev => Math.min(prev + 20, 100))}
+          style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8 }}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>Umyj</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setHappiness(prev => Math.min(prev + 20, 100))}
+          style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8 }}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>Zabawa</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
