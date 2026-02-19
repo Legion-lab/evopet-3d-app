@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { GLView } from 'expo-gl';
 import { Renderer } from 'expo-three';
 import * as THREE from 'three';
 
 export default function App() {
+  const sphereRef = useRef(null);
   const [hunger, setHunger] = useState(80);
   const [energy, setEnergy] = useState(80);
   const [hygiene, setHygiene] = useState(80);
@@ -20,6 +21,22 @@ export default function App() {
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (sphereRef.current) {
+      if (happiness < 30) {
+        sphereRef.current.material.color.setHex(0x0000ff);
+      } else {
+        sphereRef.current.material.color.setHex(0xff0000);
+      }
+
+      if (hunger < 30) {
+        sphereRef.current.scale.set(0.7, 0.7, 0.7);
+      } else {
+        sphereRef.current.scale.set(1, 1, 1);
+      }
+    }
+  }, [hunger, happiness]);
 
   const onContextCreate = async (gl) => {
     // Create a WebGLRenderer without a DOM element
@@ -48,6 +65,7 @@ export default function App() {
     const sphere = new THREE.Mesh(geometry, material);
     sphere.position.set(0, 0, 0);
     scene.add(sphere);
+    sphereRef.current = sphere;
 
     // --- Task T-03: Modify Lighting ---
     // Ambient Light (soft base lighting)
