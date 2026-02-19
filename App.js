@@ -83,9 +83,31 @@ export default function App() {
     scene.add(pointLight);
 
 
+    // Animation state
+    let currentBaseScale = 1;
+    let previousExpectedScale = 1;
+
     // Render loop
     const render = () => {
       requestAnimationFrame(render);
+
+      const time = Date.now();
+
+      // Levitation: Smooth Y-axis movement
+      sphere.position.y = Math.sin(time * 0.002) * 0.2;
+
+      // Breathing: Pulse scale
+      // Check for external scale changes (e.g. from useEffect)
+      if (Math.abs(sphere.scale.x - previousExpectedScale) > 0.0001) {
+        currentBaseScale = sphere.scale.x;
+      }
+
+      const pulseFactor = 1 + 0.03 * Math.sin(time * 0.003);
+      const newScale = currentBaseScale * pulseFactor;
+
+      sphere.scale.set(newScale, newScale, newScale);
+      previousExpectedScale = newScale;
+
       renderer.render(scene, camera);
       gl.endFrameEXP();
     };
