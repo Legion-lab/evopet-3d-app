@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { GLView } from 'expo-gl';
 import { Renderer } from 'expo-three';
 import * as THREE from 'three';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function App() {
   const sphereRef = useRef(null);
@@ -10,6 +11,41 @@ export default function App() {
   const [energy, setEnergy] = useState(80);
   const [hygiene, setHygiene] = useState(80);
   const [happiness, setHappiness] = useState(80);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    const loadState = async () => {
+      try {
+        const jsonValue = await AsyncStorage.getItem('@pet_stats');
+        if (jsonValue != null) {
+          const data = JSON.parse(jsonValue);
+          setHunger(data.hunger);
+          setEnergy(data.energy);
+          setHygiene(data.hygiene);
+          setHappiness(data.happiness);
+        }
+      } catch (e) {
+        console.error("Failed to load state", e);
+      } finally {
+        setIsLoaded(true);
+      }
+    };
+    loadState();
+  }, []);
+
+  useEffect(() => {
+    if (isLoaded) {
+      const saveState = async () => {
+        try {
+          const data = { hunger, energy, hygiene, happiness };
+          await AsyncStorage.setItem('@pet_stats', JSON.stringify(data));
+        } catch (e) {
+          console.error("Failed to save state", e);
+        }
+      };
+      saveState();
+    }
+  }, [hunger, energy, hygiene, happiness, isLoaded]);
 
   useEffect(() => {
     const interval = setInterval(() => {
