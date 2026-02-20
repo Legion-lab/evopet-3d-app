@@ -10,6 +10,10 @@ export default function App() {
   const ambientLightRef = useRef(null);
   const directionalLightRef = useRef(null);
   const scrollViewRef = useRef(null);
+  const sceneRef = useRef(null);
+  const dirtMeshesRef = useRef([]);
+
+  const [roomHygiene, setRoomHygiene] = useState(100);
   const [hunger, setHunger] = useState(80);
   const [energy, setEnergy] = useState(80);
   const [hygiene, setHygiene] = useState(80);
@@ -45,7 +49,10 @@ export default function App() {
         const jsonValue = stores['@pet_stats'];
         if (jsonValue != null) {
           const data = JSON.parse(jsonValue);
-          let { hunger, energy, hygiene, happiness, coins, isSleeping, lastSavedTime } = data;
+          let { hunger, energy, hygiene, happiness, coins, isSleeping, lastSavedTime, roomHygiene } = data;
+
+          // Default roomHygiene to 100 if missing
+          if (roomHygiene === undefined) roomHygiene = 100;
 
           if (lastSavedTime) {
             const now = Date.now();
@@ -58,12 +65,14 @@ export default function App() {
                 hunger = Math.max(hunger - elapsedSeconds * 0.5, 0);
                 hygiene = Math.max(hygiene - elapsedSeconds * 0.5, 0);
                 happiness = Math.max(happiness - elapsedSeconds * 0.5, 0);
+                roomHygiene = Math.max(roomHygiene - elapsedSeconds * 0.5, 0);
               } else {
                 // Awake Logic: Standard decay
                 hunger = Math.max(hunger - elapsedSeconds, 0);
                 energy = Math.max(energy - elapsedSeconds, 0);
                 hygiene = Math.max(hygiene - elapsedSeconds, 0);
                 happiness = Math.max(happiness - elapsedSeconds, 0);
+                roomHygiene = Math.max(roomHygiene - elapsedSeconds, 0);
               }
             }
           }
@@ -72,6 +81,7 @@ export default function App() {
           setEnergy(energy);
           setHygiene(hygiene);
           setHappiness(happiness);
+          setRoomHygiene(roomHygiene);
           if (coins !== undefined) setCoins(coins);
           if (isSleeping !== undefined) setIsSleeping(isSleeping);
         }
@@ -102,7 +112,7 @@ export default function App() {
     if (isLoaded) {
       const saveState = async () => {
         try {
-          const data = { hunger, energy, hygiene, happiness, coins, isSleeping, lastSavedTime: Date.now() };
+          const data = { hunger, energy, hygiene, happiness, coins, isSleeping, roomHygiene, lastSavedTime: Date.now() };
           await AsyncStorage.setItem('@pet_stats', JSON.stringify(data));
         } catch (e) {
           console.error("Failed to save state", e);
@@ -110,7 +120,7 @@ export default function App() {
       };
       saveState();
     }
-  }, [hunger, energy, hygiene, happiness, coins, isSleeping, isLoaded]);
+  }, [hunger, energy, hygiene, happiness, coins, isSleeping, roomHygiene, isLoaded]);
 
   // Save onboarding/profile state separately
   useEffect(() => {
@@ -132,6 +142,7 @@ export default function App() {
         setHunger((prev) => Math.max(prev - 0.5, 0));
         setHygiene((prev) => Math.max(prev - 0.5, 0));
         setHappiness((prev) => Math.max(prev - 0.5, 0));
+        setRoomHygiene((prev) => Math.max(prev - 0.5, 0));
       } else {
         // Awake Mode: Normal decay
         setHunger((prev) => {
@@ -145,6 +156,7 @@ export default function App() {
         setEnergy((prev) => Math.max(prev - 1, 0));
         setHygiene((prev) => Math.max(prev - 1, 0));
         setHappiness((prev) => Math.max(prev - 1, 0));
+        setRoomHygiene((prev) => Math.max(prev - 1, 0));
       }
     }, 1000);
 
@@ -238,15 +250,46 @@ export default function App() {
     setEnergy(80);
     setHygiene(80);
     setHappiness(80);
+    setRoomHygiene(100);
     setIsGameOver(false);
 
     try {
-      const data = { hunger: 80, energy: 80, hygiene: 80, happiness: 80, lastSavedTime: Date.now() };
+      const data = { hunger: 80, energy: 80, hygiene: 80, happiness: 80, roomHygiene: 100, lastSavedTime: Date.now() };
       await AsyncStorage.setItem('@pet_stats', JSON.stringify(data));
     } catch (e) {
       console.error("Failed to reset state", e);
     }
   };
+
+  useEffect(() => {
+    if (!sceneRef.current) return;
+
+    const targetDirtCount = Math.floor((100 - roomHygiene) / 20);
+
+    if (targetDirtCount > dirtMeshesRef.current.length) {
+      const countToAdd = targetDirtCount - dirtMeshesRef.current.length;
+      for (let i = 0; i < countToAdd; i++) {
+        const mesh = new THREE.Mesh(
+          new THREE.BoxGeometry(0.4, 0.4, 0.4),
+          new THREE.MeshStandardMaterial({ color: 0x5C4033 })
+        );
+        mesh.position.set(
+          (Math.random() - 0.5) * 5,
+          -1.2,
+          (Math.random() - 0.5) * 5
+        );
+        sceneRef.current.add(mesh);
+        dirtMeshesRef.current.push(mesh);
+      }
+    }
+
+    if (roomHygiene === 100) {
+      dirtMeshesRef.current.forEach((mesh) => {
+        sceneRef.current.remove(mesh);
+      });
+      dirtMeshesRef.current = [];
+    }
+  }, [roomHygiene]);
 
   const onContextCreate = async (gl) => {
     // Create a WebGLRenderer without a DOM element
@@ -256,6 +299,7 @@ export default function App() {
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000); // Black background
+    sceneRef.current = scene;
 
     // Perspective Camera
     const camera = new THREE.PerspectiveCamera(
@@ -610,25 +654,24 @@ export default function App() {
               <TouchableOpacity
                 style={{ backgroundColor: '#03A9F4', padding: 10, borderRadius: 5, marginBottom: 10 }}
                 onPress={() => {
-                  setHygiene(prev => Math.min(prev + 20, 100));
+                  setHygiene(prev => Math.min(prev + 30, 100));
                   setActiveActionSheet(null);
                 }}
               >
-                <Text style={{ color: 'white', textAlign: 'center' }}>Szybki Prysznic (Darmowy) +20 Higieny</Text>
+                <Text style={{ color: 'white', textAlign: 'center' }}>Umyj Bobasa (Darmowe) +30 Higieny</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={{ backgroundColor: coins >= 10 ? '#E91E63' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
-                disabled={coins < 10}
+                style={{ backgroundColor: coins >= 5 ? '#E91E63' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
+                disabled={coins < 5}
                 onPress={() => {
-                  if (coins >= 10) {
-                    setCoins(prev => prev - 10);
-                    setHygiene(prev => Math.min(prev + 50, 100));
-                    setHappiness(prev => Math.min(prev + 10, 100));
+                  if (coins >= 5) {
+                    setCoins(prev => prev - 5);
+                    setRoomHygiene(100);
                     setActiveActionSheet(null);
                   }
                 }}
               >
-                <Text style={{ color: 'white', textAlign: 'center' }}>Kąpiel z Bąbelkami (10 Monet) +50 Higieny, +10 Zadowolenia</Text>
+                <Text style={{ color: 'white', textAlign: 'center' }}>Posprzątaj Pokój (5 Monet)</Text>
               </TouchableOpacity>
             </>
           )}
