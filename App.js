@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, StyleSheet, Switch, Alert, Dimensions, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, StyleSheet, Switch, Alert, Dimensions, PanResponder, TouchableWithoutFeedback } from 'react-native';
 import { GLView } from 'expo-gl';
 import { Renderer } from 'expo-three';
 import * as THREE from 'three';
@@ -15,6 +15,12 @@ export default function App() {
   const sceneRef = useRef(null);
   const dirtMeshesRef = useRef([]);
 
+  const foodMeshRef = useRef(null);
+  const isFoodFlyingRef = useRef(false);
+  const foodVelocityRef = useRef(new THREE.Vector3());
+  const thrownItemRef = useRef(null);
+  const inventoryRef = useRef(null);
+
   const raycasterRef = useRef(new THREE.Raycaster());
   const mouseRef = useRef(new THREE.Vector2());
   const cameraRef = useRef(null);
@@ -28,6 +34,11 @@ export default function App() {
   const [happiness, setHappiness] = useState(80);
   const [coins, setCoins] = useState(50);
   const [inventory, setInventory] = useState({ snack: 0, dinner: 0, coffee: 0, hungerBuster: 0, energyBuster: 0 });
+
+  useEffect(() => {
+    inventoryRef.current = inventory;
+  }, [inventory]);
+
   const [hungerBuffUntil, setHungerBuffUntil] = useState(0);
   const [energyBuffUntil, setEnergyBuffUntil] = useState(0);
   const [isSleeping, setIsSleeping] = useState(false);
@@ -414,12 +425,48 @@ export default function App() {
     }
   }, [roomHygiene]);
 
+  const throwFood = (itemType) => {
+    if (!sceneRef.current) return;
+
+    // Cleanup existing food if any
+    if (foodMeshRef.current) {
+      sceneRef.current.remove(foodMeshRef.current);
+      foodMeshRef.current = null;
+      isFoodFlyingRef.current = false;
+    }
+
+    // Create Food Mesh (Orange Box)
+    const geometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+    const material = new THREE.MeshStandardMaterial({ color: 0xFFA500 });
+    const mesh = new THREE.Mesh(geometry, material);
+
+    // Initial Position (Bottom center, slightly forward)
+    mesh.position.set(0, -3, 2);
+
+    // Add to Scene
+    sceneRef.current.add(mesh);
+    foodMeshRef.current = mesh;
+
+    // Set Velocity (Up and forward towards 0,0,0)
+    // Target is approx 0,0,0. Start is 0,-3,2.
+    // Needs +y and -z.
+    foodVelocityRef.current.set(0, 0.25, -0.2);
+
+    isFoodFlyingRef.current = true;
+    thrownItemRef.current = itemType;
+  };
+
   const handleTouch = (event) => {
     const { pageX, pageY } = event.nativeEvent;
+
+    // T-24 Calibration Logs
+    console.log('Dotyk 2D:', pageX, pageY);
 
     // Convert to NDC (Normalized Device Coordinates)
     mouseRef.current.x = (pageX / width) * 2 - 1;
     mouseRef.current.y = -(pageY / height) * 2 - 0.1;
+
+    console.log('Kamera 3D:', mouseRef.current.x, mouseRef.current.y);
 
     if (cameraRef.current && sphereRef.current) {
       raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
@@ -433,6 +480,32 @@ export default function App() {
       }
     }
   };
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderRelease: (evt, gestureState) => {
+        const { dx, dy } = gestureState;
+
+        // Detect Upward Swipe (Throw)
+        if (dy < -50) {
+           // Check Inventory using ref to avoid stale closure
+           const currentInv = inventoryRef.current || { snack: 0, dinner: 0 };
+
+           if (currentInv.snack > 0) {
+              throwFood('snack');
+           } else if (currentInv.dinner > 0) {
+              throwFood('dinner');
+           }
+        }
+        // Detect Tap (Click)
+        else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+           handleTouch(evt);
+        }
+      },
+    })
+  ).current;
 
   const onContextCreate = async (gl) => {
     // Create a WebGLRenderer without a DOM element
@@ -520,6 +593,52 @@ export default function App() {
 
         sphere.scale.set(newScale, newScale, newScale);
         previousExpectedScale = newScale;
+
+        // --- Flying Food Physics (T-25) ---
+        if (isFoodFlyingRef.current && foodMeshRef.current) {
+          // Update Position
+          foodMeshRef.current.position.add(foodVelocityRef.current);
+
+          // Apply Gravity
+          foodVelocityRef.current.y -= 0.01;
+
+          // Rotation for visual effect
+          foodMeshRef.current.rotation.x += 0.05;
+          foodMeshRef.current.rotation.y += 0.05;
+
+          // Collision Detection
+          const distance = foodMeshRef.current.position.distanceTo(sphere.position);
+
+          if (distance < 1.5) {
+            // HIT!
+            console.log('TRAFIENIE W CEL!');
+
+            // Remove Food
+            scene.remove(foodMeshRef.current);
+            isFoodFlyingRef.current = false;
+
+            // Trigger Jump
+            isJumpingRef.current = true;
+            jumpVelocityRef.current = 0.2;
+
+            // Update Stats
+            setHappiness((prev) => Math.min(prev + 10, 100));
+
+            // Apply specific item effects
+            if (thrownItemRef.current === 'snack') {
+               setHunger((prev) => Math.min(prev + 20, 100)); // Snack value
+               setInventory((prev) => ({ ...prev, snack: Math.max(0, prev.snack - 1) }));
+            } else if (thrownItemRef.current === 'dinner') {
+               setHunger((prev) => Math.min(prev + 50, 100)); // Dinner value
+               setInventory((prev) => ({ ...prev, dinner: Math.max(0, prev.dinner - 1) }));
+            }
+
+          } else if (foodMeshRef.current.position.y < -5) {
+            // MISS (Fell out of screen)
+            scene.remove(foodMeshRef.current);
+            isFoodFlyingRef.current = false;
+          }
+        }
       }
 
       renderer.render(scene, camera);
@@ -530,14 +649,12 @@ export default function App() {
 
   return (
     <View style={{ flex: 1 }}>
-      <TouchableWithoutFeedback onPress={handleTouch}>
-        <View style={{ flex: 1 }}>
-          <GLView
-            style={{ flex: 1 }}
-            onContextCreate={onContextCreate}
-          />
-        </View>
-      </TouchableWithoutFeedback>
+      <View style={{ flex: 1 }} {...panResponder.panHandlers}>
+        <GLView
+          style={{ flex: 1 }}
+          onContextCreate={onContextCreate}
+        />
+      </View>
 
       {/* Coins Display (Top Left) */}
       <View style={{ position: 'absolute', top: 40, left: 20, zIndex: 10 }}>
