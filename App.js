@@ -35,6 +35,10 @@ export default function App() {
   const [isFirstLaunch, setIsFirstLaunch] = useState(true);
   const [onboardingStep, setOnboardingStep] = useState(0);
 
+  const [strength, setStrength] = useState(0);
+  const [intelligence, setIntelligence] = useState(0);
+  const [laziness, setLaziness] = useState(0);
+
   useEffect(() => {
     gameOverRef.current = isGameOver;
   }, [isGameOver]);
@@ -49,10 +53,13 @@ export default function App() {
         const jsonValue = stores['@pet_stats'];
         if (jsonValue != null) {
           const data = JSON.parse(jsonValue);
-          let { hunger, energy, hygiene, happiness, coins, isSleeping, lastSavedTime, roomHygiene } = data;
+          let { hunger, energy, hygiene, happiness, coins, isSleeping, lastSavedTime, roomHygiene, strength, intelligence, laziness } = data;
 
           // Default roomHygiene to 100 if missing
           if (roomHygiene === undefined) roomHygiene = 100;
+          if (strength === undefined) strength = 0;
+          if (intelligence === undefined) intelligence = 0;
+          if (laziness === undefined) laziness = 0;
 
           if (lastSavedTime) {
             const now = Date.now();
@@ -82,6 +89,9 @@ export default function App() {
           setHygiene(hygiene);
           setHappiness(happiness);
           setRoomHygiene(roomHygiene);
+          setStrength(strength);
+          setIntelligence(intelligence);
+          setLaziness(laziness);
           if (coins !== undefined) setCoins(coins);
           if (isSleeping !== undefined) setIsSleeping(isSleeping);
         }
@@ -112,7 +122,7 @@ export default function App() {
     if (isLoaded) {
       const saveState = async () => {
         try {
-          const data = { hunger, energy, hygiene, happiness, coins, isSleeping, roomHygiene, lastSavedTime: Date.now() };
+          const data = { hunger, energy, hygiene, happiness, coins, isSleeping, roomHygiene, strength, intelligence, laziness, lastSavedTime: Date.now() };
           await AsyncStorage.setItem('@pet_stats', JSON.stringify(data));
         } catch (e) {
           console.error("Failed to save state", e);
@@ -120,7 +130,7 @@ export default function App() {
       };
       saveState();
     }
-  }, [hunger, energy, hygiene, happiness, coins, isSleeping, roomHygiene, isLoaded]);
+  }, [hunger, energy, hygiene, happiness, coins, isSleeping, roomHygiene, strength, intelligence, laziness, isLoaded]);
 
   // Save onboarding/profile state separately
   useEffect(() => {
@@ -178,8 +188,32 @@ export default function App() {
       } else {
         sphereRef.current.scale.set(1, 1, 1);
       }
+
+      // Evolution Logic
+      let newGeometry = null;
+      const currentGeoType = sphereRef.current.geometry.type;
+
+      if (strength >= 50) {
+         if (currentGeoType !== 'BoxGeometry') {
+            newGeometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+         }
+      } else if (intelligence >= 50) {
+         // Strength < 50 implicitly because of else if
+         if (currentGeoType !== 'ConeGeometry') {
+            newGeometry = new THREE.ConeGeometry(1, 2, 32);
+         }
+      } else {
+         if (currentGeoType !== 'SphereGeometry') {
+            newGeometry = new THREE.SphereGeometry(1.5, 32, 32);
+         }
+      }
+
+      if (newGeometry) {
+        sphereRef.current.geometry.dispose();
+        sphereRef.current.geometry = newGeometry;
+      }
     }
-  }, [hunger, happiness, isGameOver]);
+  }, [hunger, happiness, isGameOver, strength, intelligence]);
 
   // Sleep Effect (Lighting)
   useEffect(() => {
@@ -251,10 +285,13 @@ export default function App() {
     setHygiene(80);
     setHappiness(80);
     setRoomHygiene(100);
+    setStrength(0);
+    setIntelligence(0);
+    setLaziness(0);
     setIsGameOver(false);
 
     try {
-      const data = { hunger: 80, energy: 80, hygiene: 80, happiness: 80, roomHygiene: 100, lastSavedTime: Date.now() };
+      const data = { hunger: 80, energy: 80, hygiene: 80, happiness: 80, roomHygiene: 100, strength: 0, intelligence: 0, laziness: 0, lastSavedTime: Date.now() };
       await AsyncStorage.setItem('@pet_stats', JSON.stringify(data));
     } catch (e) {
       console.error("Failed to reset state", e);
@@ -685,11 +722,30 @@ export default function App() {
                   setHappiness(prev => Math.min(prev + 10, 100));
                   setEnergy(prev => Math.max(prev - 5, 0));
                   setHygiene(prev => Math.max(prev - 5, 0));
+                  setLaziness(prev => prev + 5);
                   setActiveActionSheet(null);
                 }}
               >
-                <Text style={{ color: 'white', textAlign: 'center' }}>Odbijanie piłki (Darmowe) +10 Zad, -5 En/Hig</Text>
+                <Text style={{ color: 'white', textAlign: 'center' }}>Odbijanie piłki (Darmowe) +10 Zad, -5 En/Hig, +5 Len</Text>
               </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{ backgroundColor: coins >= 10 ? '#FF5722' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
+                disabled={coins < 10}
+                onPress={() => {
+                   if (coins >= 10) {
+                     setCoins(prev => prev - 10);
+                     setHappiness(prev => Math.min(prev + 20, 100));
+                     setEnergy(prev => Math.max(prev - 20, 0));
+                     setHygiene(prev => Math.max(prev - 15, 0));
+                     setStrength(prev => prev + 10);
+                     setActiveActionSheet(null);
+                   }
+                }}
+              >
+                <Text style={{ color: 'white', textAlign: 'center' }}>Trening Siłowy (10 Monet) +20 Zad, -20 En, -15 Hig, +10 Siły</Text>
+              </TouchableOpacity>
+
               <TouchableOpacity
                 style={{ backgroundColor: coins >= 5 ? '#9C27B0' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
                 disabled={coins < 5}
@@ -698,11 +754,12 @@ export default function App() {
                      setCoins(prev => prev - 5);
                      setHappiness(prev => Math.min(prev + 30, 100));
                      setEnergy(prev => Math.max(prev - 15, 0));
+                     setIntelligence(prev => prev + 10);
                      setActiveActionSheet(null);
                    }
                 }}
               >
-                <Text style={{ color: 'white', textAlign: 'center' }}>Gra Logiczna (5 Monet) +30 Zad, -15 En</Text>
+                <Text style={{ color: 'white', textAlign: 'center' }}>Gra Logiczna (5 Monet) +30 Zad, -15 En, +10 Int</Text>
               </TouchableOpacity>
             </>
           )}
