@@ -1,0 +1,27 @@
+
+> app@1.0.0 web
+> expo start --web
+
+Starting project at /app
+Starting Metro Bundler
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+Web ./index.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 68.3% (138/178)
+ WARN  The package /app/node_modules/three contains an invalid package.json configuration. Consider raising this issue with the package maintainer(s).
+Reason: The resolution for "/app/node_modules/three/examples/jsm/loaders/ColladaLoader" defined in "exports" is /app/node_modules/three/examples/jsm/loaders/ColladaLoader, however this file does not exist. Falling back to file-based resolution.
+ WARN  The package /app/node_modules/three contains an invalid package.json configuration. Consider raising this issue with the package maintainer(s).
+Reason: The resolution for "/app/node_modules/three/examples/jsm/loaders/GLTFLoader" defined in "exports" is /app/node_modules/three/examples/jsm/loaders/GLTFLoader, however this file does not exist. Falling back to file-based resolution.
+ WARN  The package /app/node_modules/three contains an invalid package.json configuration. Consider raising this issue with the package maintainer(s).
+Reason: The resolution for "/app/node_modules/three/examples/jsm/loaders/MTLLoader" defined in "exports" is /app/node_modules/three/examples/jsm/loaders/MTLLoader, however this file does not exist. Falling back to file-based resolution.
+ WARN  The package /app/node_modules/three contains an invalid package.json configuration. Consider raising this issue with the package maintainer(s).
+Reason: The resolution for "/app/node_modules/three/examples/jsm/loaders/OBJLoader" defined in "exports" is /app/node_modules/three/examples/jsm/loaders/OBJLoader, however this file does not exist. Falling back to file-based resolution.
+ WARN  The package /app/node_modules/three contains an invalid package.json configuration. Consider raising this issue with the package maintainer(s).
+Reason: The resolution for "/app/node_modules/three/examples/jsm/loaders/ColladaLoader" defined in "exports" is /app/node_modules/three/examples/jsm/loaders/ColladaLoader, however this file does not exist. Falling back to file-based resolution.
+ WARN  The package /app/node_modules/three contains an invalid package.json configuration. Consider raising this issue with the package maintainer(s).
+Reason: The resolution for "/app/node_modules/three/examples/jsm/loaders/MTLLoader" defined in "exports" is /app/node_modules/three/examples/jsm/loaders/MTLLoader, however this file does not exist. Falling back to file-based resolution.
+ WARN  The package /app/node_modules/three contains an invalid package.json configuration. Consider raising this issue with the package maintainer(s).
+Reason: The resolution for "/app/node_modules/three/examples/jsm/loaders/OBJLoader" defined in "exports" is /app/node_modules/three/examples/jsm/loaders/OBJLoader, however this file does not exist. Falling back to file-based resolution.
+Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.3% (276/277)
+Web Bundled 9804ms index.js (277 modules)
+ LOG  [web] Logs will appear in the browser console
