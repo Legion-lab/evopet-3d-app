@@ -19,6 +19,7 @@ export default function App() {
   const [hygiene, setHygiene] = useState(80);
   const [happiness, setHappiness] = useState(80);
   const [coins, setCoins] = useState(50);
+  const [inventory, setInventory] = useState({ snack: 0, dinner: 0, coffee: 0 });
   const [isSleeping, setIsSleeping] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
@@ -53,13 +54,14 @@ export default function App() {
         const jsonValue = stores['@pet_stats'];
         if (jsonValue != null) {
           const data = JSON.parse(jsonValue);
-          let { hunger, energy, hygiene, happiness, coins, isSleeping, lastSavedTime, roomHygiene, strength, intelligence, laziness } = data;
+          let { hunger, energy, hygiene, happiness, coins, isSleeping, lastSavedTime, roomHygiene, strength, intelligence, laziness, inventory } = data;
 
           // Default roomHygiene to 100 if missing
           if (roomHygiene === undefined) roomHygiene = 100;
           if (strength === undefined) strength = 0;
           if (intelligence === undefined) intelligence = 0;
           if (laziness === undefined) laziness = 0;
+          if (inventory === undefined) inventory = { snack: 0, dinner: 0, coffee: 0 };
 
           if (lastSavedTime) {
             const now = Date.now();
@@ -92,6 +94,7 @@ export default function App() {
           setStrength(strength);
           setIntelligence(intelligence);
           setLaziness(laziness);
+          setInventory(inventory);
           if (coins !== undefined) setCoins(coins);
           if (isSleeping !== undefined) setIsSleeping(isSleeping);
         }
@@ -122,7 +125,7 @@ export default function App() {
     if (isLoaded) {
       const saveState = async () => {
         try {
-          const data = { hunger, energy, hygiene, happiness, coins, isSleeping, roomHygiene, strength, intelligence, laziness, lastSavedTime: Date.now() };
+          const data = { hunger, energy, hygiene, happiness, coins, isSleeping, roomHygiene, strength, intelligence, laziness, inventory, lastSavedTime: Date.now() };
           await AsyncStorage.setItem('@pet_stats', JSON.stringify(data));
         } catch (e) {
           console.error("Failed to save state", e);
@@ -130,7 +133,7 @@ export default function App() {
       };
       saveState();
     }
-  }, [hunger, energy, hygiene, happiness, coins, isSleeping, roomHygiene, strength, intelligence, laziness, isLoaded]);
+  }, [hunger, energy, hygiene, happiness, coins, isSleeping, roomHygiene, strength, intelligence, laziness, inventory, isLoaded]);
 
   // Save onboarding/profile state separately
   useEffect(() => {
@@ -288,10 +291,11 @@ export default function App() {
     setStrength(0);
     setIntelligence(0);
     setLaziness(0);
+    setInventory({ snack: 0, dinner: 0, coffee: 0 });
     setIsGameOver(false);
 
     try {
-      const data = { hunger: 80, energy: 80, hygiene: 80, happiness: 80, roomHygiene: 100, strength: 0, intelligence: 0, laziness: 0, lastSavedTime: Date.now() };
+      const data = { hunger: 80, energy: 80, hygiene: 80, happiness: 80, roomHygiene: 100, strength: 0, intelligence: 0, laziness: 0, inventory: { snack: 0, dinner: 0, coffee: 0 }, lastSavedTime: Date.now() };
       await AsyncStorage.setItem('@pet_stats', JSON.stringify(data));
     } catch (e) {
       console.error("Failed to reset state", e);
@@ -543,6 +547,53 @@ export default function App() {
                      </TouchableOpacity>
                    </View>
                  </KeyboardAvoidingView>
+               ) : activeModal === 'Sklep' ? (
+                 <View style={{ width: '100%', alignItems: 'center' }}>
+                   <TouchableOpacity
+                     style={{ backgroundColor: coins >= 5 ? '#4CAF50' : '#555', padding: 15, borderRadius: 10, marginBottom: 10, width: '100%' }}
+                     disabled={coins < 5}
+                     onPress={() => {
+                       if (coins >= 5) {
+                         setCoins(prev => prev - 5);
+                         setInventory(prev => ({ ...prev, snack: prev.snack + 1 }));
+                       }
+                     }}
+                   >
+                     <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>Przekąska (5 Monet)</Text>
+                   </TouchableOpacity>
+
+                   <TouchableOpacity
+                     style={{ backgroundColor: coins >= 10 ? '#FF9800' : '#555', padding: 15, borderRadius: 10, marginBottom: 10, width: '100%' }}
+                     disabled={coins < 10}
+                     onPress={() => {
+                       if (coins >= 10) {
+                         setCoins(prev => prev - 10);
+                         setInventory(prev => ({ ...prev, dinner: prev.dinner + 1 }));
+                       }
+                     }}
+                   >
+                     <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>Pełny Obiad (10 Monet)</Text>
+                   </TouchableOpacity>
+
+                   <TouchableOpacity
+                     style={{ backgroundColor: coins >= 15 ? '#795548' : '#555', padding: 15, borderRadius: 10, marginBottom: 10, width: '100%' }}
+                     disabled={coins < 15}
+                     onPress={() => {
+                       if (coins >= 15) {
+                         setCoins(prev => prev - 15);
+                         setInventory(prev => ({ ...prev, coffee: prev.coffee + 1 }));
+                       }
+                     }}
+                   >
+                     <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>Kawa (15 Monet)</Text>
+                   </TouchableOpacity>
+                 </View>
+               ) : activeModal === 'Plecak' ? (
+                 <View style={{ width: '100%', alignItems: 'center' }}>
+                    <Text style={{ color: 'white', fontSize: 18, marginBottom: 10 }}>Przekąski: {inventory.snack}</Text>
+                    <Text style={{ color: 'white', fontSize: 18, marginBottom: 10 }}>Obiady: {inventory.dinner}</Text>
+                    <Text style={{ color: 'white', fontSize: 18, marginBottom: 10 }}>Kawy: {inventory.coffee}</Text>
+                 </View>
                ) : (
                  <View style={{ height: 100, justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
                    <Text style={{ color: '#aaa' }}>Treść dla {activeModal} pojawi się wkrótce...</Text>
@@ -633,26 +684,30 @@ export default function App() {
             <>
               <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' }}>Jedzenie</Text>
               <TouchableOpacity
-                style={{ backgroundColor: '#4CAF50', padding: 10, borderRadius: 5, marginBottom: 10 }}
+                style={{ backgroundColor: inventory.snack > 0 ? '#4CAF50' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
+                disabled={inventory.snack <= 0}
                 onPress={() => {
-                  setHunger(prev => Math.min(prev + 10, 100));
-                  setActiveActionSheet(null);
+                  if (inventory.snack > 0) {
+                    setInventory(prev => ({ ...prev, snack: prev.snack - 1 }));
+                    setHunger(prev => Math.min(prev + 20, 100));
+                    setActiveActionSheet(null);
+                  }
                 }}
               >
-                <Text style={{ color: 'white', textAlign: 'center' }}>Przekąska (Darmowa) +10 Głodu</Text>
+                <Text style={{ color: 'white', textAlign: 'center' }}>Zjedz Przekąskę ({inventory.snack}) +20 Głodu</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={{ backgroundColor: coins >= 10 ? '#FF9800' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
-                disabled={coins < 10}
+                style={{ backgroundColor: inventory.dinner > 0 ? '#FF9800' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
+                disabled={inventory.dinner <= 0}
                 onPress={() => {
-                  if (coins >= 10) {
-                    setCoins(prev => prev - 10);
+                  if (inventory.dinner > 0) {
+                    setInventory(prev => ({ ...prev, dinner: prev.dinner - 1 }));
                     setHunger(prev => Math.min(prev + 50, 100));
                     setActiveActionSheet(null);
                   }
                 }}
               >
-                <Text style={{ color: 'white', textAlign: 'center' }}>Pełny Obiad (10 Monet) +50 Głodu</Text>
+                <Text style={{ color: 'white', textAlign: 'center' }}>Zjedz Obiad ({inventory.dinner}) +50 Głodu</Text>
               </TouchableOpacity>
             </>
           )}
@@ -661,17 +716,17 @@ export default function App() {
             <>
               <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' }}>Energia</Text>
               <TouchableOpacity
-                style={{ backgroundColor: coins >= 15 ? '#795548' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
-                disabled={coins < 15}
+                style={{ backgroundColor: inventory.coffee > 0 ? '#795548' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
+                disabled={inventory.coffee <= 0}
                 onPress={() => {
-                   if (coins >= 15) {
-                     setCoins(prev => prev - 15);
+                   if (inventory.coffee > 0) {
+                     setInventory(prev => ({ ...prev, coffee: prev.coffee - 1 }));
                      setEnergy(prev => Math.min(prev + 40, 100));
                      setActiveActionSheet(null);
                    }
                 }}
               >
-                <Text style={{ color: 'white', textAlign: 'center' }}>Kawa (15 Monet) +40 Energii</Text>
+                <Text style={{ color: 'white', textAlign: 'center' }}>Wypij Kawę ({inventory.coffee}) +40 Energii</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={{ backgroundColor: isSleeping ? '#FFD700' : '#483D8B', padding: 10, borderRadius: 5, marginBottom: 10 }}
