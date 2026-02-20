@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, StyleSheet, Switch, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, StyleSheet, Switch, Alert, Dimensions, TouchableWithoutFeedback } from 'react-native';
 import { GLView } from 'expo-gl';
 import { Renderer } from 'expo-three';
 import * as THREE from 'three';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const { width, height } = Dimensions.get('window');
 
 export default function App() {
   const sphereRef = useRef(null);
@@ -12,6 +14,12 @@ export default function App() {
   const scrollViewRef = useRef(null);
   const sceneRef = useRef(null);
   const dirtMeshesRef = useRef([]);
+
+  const raycasterRef = useRef(new THREE.Raycaster());
+  const mouseRef = useRef(new THREE.Vector2());
+  const cameraRef = useRef(null);
+  const isJumpingRef = useRef(false);
+  const jumpVelocityRef = useRef(0);
 
   const [roomHygiene, setRoomHygiene] = useState(100);
   const [hunger, setHunger] = useState(80);
@@ -406,6 +414,26 @@ export default function App() {
     }
   }, [roomHygiene]);
 
+  const handleTouch = (event) => {
+    const { pageX, pageY } = event.nativeEvent;
+
+    // Convert to NDC (Normalized Device Coordinates)
+    mouseRef.current.x = (pageX / width) * 2 - 1;
+    mouseRef.current.y = -(pageY / height) * 2 - 0.1;
+
+    if (cameraRef.current && sphereRef.current) {
+      raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
+      const intersects = raycasterRef.current.intersectObject(sphereRef.current);
+
+      if (intersects.length > 0 && !isJumpingRef.current) {
+        isJumpingRef.current = true;
+        jumpVelocityRef.current = 0.15;
+        // Add bonus happiness
+        setHappiness((prev) => Math.min(prev + 5, 100));
+      }
+    }
+  };
+
   const onContextCreate = async (gl) => {
     // Create a WebGLRenderer without a DOM element
     const renderer = new Renderer({ gl });
@@ -424,6 +452,7 @@ export default function App() {
       1000
     );
     camera.position.z = 5;
+    cameraRef.current = camera;
 
     // --- Task T-03: Add Red Sphere ---
     // Geometry: Sphere with radius 1.5
@@ -465,8 +494,20 @@ export default function App() {
       if (!gameOverRef.current) {
         const time = Date.now();
 
-        // Levitation: Smooth Y-axis movement
-        sphere.position.y = Math.sin(time * 0.002) * 0.2;
+        // Jump Physics
+        if (isJumpingRef.current) {
+          sphere.position.y += jumpVelocityRef.current;
+          jumpVelocityRef.current -= 0.01;
+
+          if (sphere.position.y < 0) {
+            sphere.position.y = 0;
+            isJumpingRef.current = false;
+            jumpVelocityRef.current = 0;
+          }
+        } else {
+          // Levitation: Smooth Y-axis movement
+          sphere.position.y = Math.sin(time * 0.002) * 0.2;
+        }
 
         // Breathing: Pulse scale
         // Check for external scale changes (e.g. from useEffect)
@@ -489,12 +530,14 @@ export default function App() {
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={{ flex: 1 }}>
-        <GLView
-          style={{ flex: 1 }}
-          onContextCreate={onContextCreate}
-        />
-      </View>
+      <TouchableWithoutFeedback onPress={handleTouch}>
+        <View style={{ flex: 1 }}>
+          <GLView
+            style={{ flex: 1 }}
+            onContextCreate={onContextCreate}
+          />
+        </View>
+      </TouchableWithoutFeedback>
 
       {/* Coins Display (Top Left) */}
       <View style={{ position: 'absolute', top: 40, left: 20, zIndex: 10 }}>
