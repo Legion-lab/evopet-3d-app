@@ -12,6 +12,12 @@ export default function App() {
   const [hygiene, setHygiene] = useState(80);
   const [happiness, setHappiness] = useState(80);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isGameOver, setIsGameOver] = useState(false);
+  const gameOverRef = useRef(false);
+
+  useEffect(() => {
+    gameOverRef.current = isGameOver;
+  }, [isGameOver]);
 
   useEffect(() => {
     const loadState = async () => {
@@ -63,7 +69,16 @@ export default function App() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setHunger((prev) => Math.max(prev - 1, 0));
+      if (gameOverRef.current) return;
+
+      setHunger((prev) => {
+        const newValue = prev - 1;
+        if (newValue <= 0) {
+          setIsGameOver(true);
+          return 0;
+        }
+        return newValue;
+      });
       setEnergy((prev) => Math.max(prev - 1, 0));
       setHygiene((prev) => Math.max(prev - 1, 0));
       setHappiness((prev) => Math.max(prev - 1, 0));
@@ -74,7 +89,9 @@ export default function App() {
 
   useEffect(() => {
     if (sphereRef.current) {
-      if (happiness < 30) {
+      if (isGameOver) {
+        sphereRef.current.material.color.setHex(0x555555);
+      } else if (happiness < 30) {
         sphereRef.current.material.color.setHex(0x0000ff);
       } else {
         sphereRef.current.material.color.setHex(0xff0000);
@@ -86,7 +103,22 @@ export default function App() {
         sphereRef.current.scale.set(1, 1, 1);
       }
     }
-  }, [hunger, happiness]);
+  }, [hunger, happiness, isGameOver]);
+
+  const resetGame = async () => {
+    setHunger(80);
+    setEnergy(80);
+    setHygiene(80);
+    setHappiness(80);
+    setIsGameOver(false);
+
+    try {
+      const data = { hunger: 80, energy: 80, hygiene: 80, happiness: 80, lastSavedTime: Date.now() };
+      await AsyncStorage.setItem('@pet_stats', JSON.stringify(data));
+    } catch (e) {
+      console.error("Failed to reset state", e);
+    }
+  };
 
   const onContextCreate = async (gl) => {
     // Create a WebGLRenderer without a DOM element
@@ -141,22 +173,24 @@ export default function App() {
     const render = () => {
       requestAnimationFrame(render);
 
-      const time = Date.now();
+      if (!gameOverRef.current) {
+        const time = Date.now();
 
-      // Levitation: Smooth Y-axis movement
-      sphere.position.y = Math.sin(time * 0.002) * 0.2;
+        // Levitation: Smooth Y-axis movement
+        sphere.position.y = Math.sin(time * 0.002) * 0.2;
 
-      // Breathing: Pulse scale
-      // Check for external scale changes (e.g. from useEffect)
-      if (Math.abs(sphere.scale.x - previousExpectedScale) > 0.0001) {
-        currentBaseScale = sphere.scale.x;
+        // Breathing: Pulse scale
+        // Check for external scale changes (e.g. from useEffect)
+        if (Math.abs(sphere.scale.x - previousExpectedScale) > 0.0001) {
+          currentBaseScale = sphere.scale.x;
+        }
+
+        const pulseFactor = 1 + 0.03 * Math.sin(time * 0.003);
+        const newScale = currentBaseScale * pulseFactor;
+
+        sphere.scale.set(newScale, newScale, newScale);
+        previousExpectedScale = newScale;
       }
-
-      const pulseFactor = 1 + 0.03 * Math.sin(time * 0.003);
-      const newScale = currentBaseScale * pulseFactor;
-
-      sphere.scale.set(newScale, newScale, newScale);
-      previousExpectedScale = newScale;
 
       renderer.render(scene, camera);
       gl.endFrameEXP();
@@ -197,35 +231,57 @@ export default function App() {
       </View>
 
       {/* Action Buttons */}
-      <View style={{ position: 'absolute', bottom: 30, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-evenly', zIndex: 1 }}>
-        <TouchableOpacity
-          onPress={() => setHunger(prev => Math.min(prev + 20, 100))}
-          style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8 }}
-        >
-          <Text style={{ color: 'white', fontWeight: 'bold' }}>Nakarm</Text>
-        </TouchableOpacity>
+      {!isGameOver && (
+        <View style={{ position: 'absolute', bottom: 30, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-evenly', zIndex: 1 }}>
+          <TouchableOpacity
+            onPress={() => setHunger(prev => Math.min(prev + 20, 100))}
+            style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8 }}
+          >
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>Nakarm</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => setEnergy(prev => Math.min(prev + 20, 100))}
-          style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8 }}
-        >
-          <Text style={{ color: 'white', fontWeight: 'bold' }}>Sen</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setEnergy(prev => Math.min(prev + 20, 100))}
+            style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8 }}
+          >
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>Sen</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => setHygiene(prev => Math.min(prev + 20, 100))}
-          style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8 }}
-        >
-          <Text style={{ color: 'white', fontWeight: 'bold' }}>Umyj</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setHygiene(prev => Math.min(prev + 20, 100))}
+            style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8 }}
+          >
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>Umyj</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => setHappiness(prev => Math.min(prev + 20, 100))}
-          style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8 }}
-        >
-          <Text style={{ color: 'white', fontWeight: 'bold' }}>Zabawa</Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            onPress={() => setHappiness(prev => Math.min(prev + 20, 100))}
+            style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8 }}
+          >
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>Zabawa</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Game Over Overlay */}
+      {isGameOver && (
+        <View style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: 'rgba(0,0,0,0.7)',
+          zIndex: 2
+        }}>
+          <Text style={{ color: 'red', fontSize: 40, fontWeight: 'bold', marginBottom: 20 }}>GAME OVER</Text>
+          <TouchableOpacity
+            onPress={resetGame}
+            style={{ backgroundColor: '#4CAF50', padding: 15, borderRadius: 8 }}
+          >
+            <Text style={{ color: 'white', fontSize: 20, fontWeight: 'bold' }}>Zacznij od nowa</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
