@@ -7,6 +7,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
+const callPetAI = async (userMessage, contextData) => {
+  console.log("AI Context:", JSON.stringify(contextData, null, 2));
+
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        reply: "Zrozumiałem! Mam dużo energii i czuję się świetnie!",
+        action: "jump"
+      });
+    }, 1000);
+  });
+};
+
 export default function App() {
   const sphereRef = useRef(null);
   const ambientLightRef = useRef(null);
@@ -56,11 +69,11 @@ export default function App() {
 
       // Create new mesh
       const geometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
-      const material = new THREE.MeshStandardMaterial({ color: 0xFFA500 });
+      const material = new THREE.MeshStandardMaterial({ color: 0xFFA500 }); // Orange
       const mesh = new THREE.Mesh(geometry, material);
 
       // Position fixed relative to camera view
-      mesh.position.set(0, -1.5, -3);
+      mesh.position.set(0, -0.5, -2);
 
       sceneRef.current.add(mesh);
       foodMeshRef.current = mesh;
@@ -361,12 +374,26 @@ export default function App() {
       }, 1000);
     } else {
       // Standard Chat
-      setTimeout(() => {
+      const contextData = {
+        user_name: userName,
+        pet_name: petName,
+        stats: { hunger, energy, happiness, hygiene },
+        inventory,
+        rpg_stats: { strength, intelligence, laziness },
+        message: userText
+      };
+
+      callPetAI(userText, contextData).then((response) => {
         setMessages((prev) => [...prev, {
           sender: 'pet',
-          text: `Hau hau, ${userName}!`
+          text: response.reply
         }]);
-      }, 1000);
+
+        if (response.action === 'jump') {
+          isJumpingRef.current = true;
+          jumpVelocityRef.current = 0.2;
+        }
+      });
     }
   };
 
@@ -1085,6 +1112,7 @@ export default function App() {
                   onPress={() => {
                     if (inventory.snack > 0) {
                       setEquippedFood('snack');
+                      // Fix: Ensure menu closes
                       setActiveActionSheet(null);
                     }
                   }}
@@ -1103,6 +1131,7 @@ export default function App() {
                   onPress={() => {
                     if (inventory.dinner > 0) {
                       setEquippedFood('dinner');
+                      // Fix: Ensure menu closes
                       setActiveActionSheet(null);
                     }
                   }}
