@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, StyleSheet } from 'react-native';
 import { GLView } from 'expo-gl';
 import { Renderer } from 'expo-three';
 import * as THREE from 'three';
@@ -446,23 +446,15 @@ export default function App() {
         <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#FFD700' }}>🪙 {coins}</Text>
       </View>
 
-      {/* Right Side Vertical Navigation (TikTok Style) */}
+      {/* Right Side Vertical Navigation (No Stats Button) */}
       <View style={{
         position: 'absolute',
         right: 15,
-        bottom: 100,
+        bottom: 150, // Moved up slightly to make room
         flexDirection: 'column',
         alignItems: 'center',
         gap: 20
       }}>
-        {/* Stats Button */}
-        <TouchableOpacity
-          onPress={() => setShowHUD(!showHUD)}
-          style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}
-        >
-          <Text style={{ fontSize: 24 }}>📊</Text>
-        </TouchableOpacity>
-
         {/* Chat Button */}
         <View style={{ alignItems: 'center' }}>
           {(isFirstLaunch && !showHUD && activeModal === null) && (
@@ -529,9 +521,12 @@ export default function App() {
 
       {/* Universal Modal */}
       {activeModal !== null && (
-         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 20, justifyContent: 'center', alignItems: 'center' }}>
-            <View style={{ width: '80%', backgroundColor: '#333', borderRadius: 20, padding: 20, alignItems: 'center' }}>
+         <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
                <Text style={{ color: 'white', fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>Witaj w: {activeModal}</Text>
+               <TouchableOpacity onPress={() => setActiveModal(null)} style={styles.closeButton}>
+                  <Text style={{ color: 'white', fontSize: 14 }}>❌</Text>
+               </TouchableOpacity>
 
                {activeModal === 'Czat' ? (
                  <KeyboardAvoidingView behavior="padding" style={{ width: '100%', height: 300 }}>
@@ -694,261 +689,317 @@ export default function App() {
                    <Text style={{ color: '#aaa' }}>Treść dla {activeModal} pojawi się wkrótce...</Text>
                  </View>
                )}
-
-               <TouchableOpacity onPress={() => setActiveModal(null)} style={{ padding: 10, marginTop: 10, backgroundColor: '#d32f2f', borderRadius: 5, width: '100%', alignItems: 'center' }}>
-                  <Text style={{ color: 'white', fontWeight: 'bold' }}>Zamknij</Text>
-               </TouchableOpacity>
             </View>
          </View>
       )}
 
       {showHUD && (
-      <View style={{ position: 'absolute', bottom: 120, left: 20, width: '60%', zIndex: 1 }}>
+      <View style={styles.hudContainer}>
         {/* Hunger */}
-        <Text style={{ color: 'white', marginBottom: 5 }}>Głód</Text>
-        <View style={{ height: 20, backgroundColor: '#333', borderRadius: 10, marginBottom: 10 }}>
-          <View style={{ width: `${hunger}%`, height: '100%', backgroundColor: 'orange', borderRadius: 10 }} />
+        <View style={styles.statRow}>
+          <View style={styles.statHeader}>
+            <Text style={styles.statLabel}>🍖 Głód</Text>
+            <Text style={styles.statValue}>{Math.round(hunger)}%</Text>
+          </View>
+          <View style={styles.statBarBg}>
+            <View style={{ width: `${hunger}%`, height: '100%', backgroundColor: '#FF5252' }} />
+          </View>
         </View>
 
         {/* Energy */}
-        <Text style={{ color: 'white', marginBottom: 5 }}>Energia</Text>
-        <View style={{ height: 20, backgroundColor: '#333', borderRadius: 10, marginBottom: 10 }}>
-          <View style={{ width: `${energy}%`, height: '100%', backgroundColor: 'yellow', borderRadius: 10 }} />
+        <View style={styles.statRow}>
+          <View style={styles.statHeader}>
+            <Text style={styles.statLabel}>⚡ Energia</Text>
+            <Text style={styles.statValue}>{Math.round(energy)}%</Text>
+          </View>
+          <View style={styles.statBarBg}>
+            <View style={{ width: `${energy}%`, height: '100%', backgroundColor: '#FFD740' }} />
+          </View>
         </View>
 
         {/* Hygiene */}
-        <Text style={{ color: 'white', marginBottom: 5 }}>Higiena</Text>
-        <View style={{ height: 20, backgroundColor: '#333', borderRadius: 10, marginBottom: 10 }}>
-          <View style={{ width: `${hygiene}%`, height: '100%', backgroundColor: 'blue', borderRadius: 10 }} />
+        <View style={styles.statRow}>
+          <View style={styles.statHeader}>
+            <Text style={styles.statLabel}>🚿 Higiena</Text>
+            <Text style={styles.statValue}>{Math.round(hygiene)}%</Text>
+          </View>
+          <View style={styles.statBarBg}>
+            <View style={{ width: `${hygiene}%`, height: '100%', backgroundColor: '#448AFF' }} />
+          </View>
         </View>
 
         {/* Fun */}
-        <Text style={{ color: 'white', marginBottom: 5 }}>Zadowolenie</Text>
-        <View style={{ height: 20, backgroundColor: '#333', borderRadius: 10, marginBottom: 10 }}>
-          <View style={{ width: `${happiness}%`, height: '100%', backgroundColor: 'green', borderRadius: 10 }} />
+        <View style={styles.statRow}>
+          <View style={styles.statHeader}>
+            <Text style={styles.statLabel}>⚽ Zadowolenie</Text>
+            <Text style={styles.statValue}>{Math.round(happiness)}%</Text>
+          </View>
+          <View style={styles.statBarBg}>
+            <View style={{ width: `${happiness}%`, height: '100%', backgroundColor: '#69F0AE' }} />
+          </View>
         </View>
+
+        {/* Action Buttons Row */}
+        {!isGameOver && (
+          <View style={styles.actionRow}>
+            <TouchableOpacity onPress={() => setActiveActionSheet('food')} style={styles.roundActionButton}>
+              <Text style={{ fontSize: 24 }}>🍖</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setActiveActionSheet('energy')} style={styles.roundActionButton}>
+              <Text style={{ fontSize: 24 }}>⚡</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setActiveActionSheet('hygiene')} style={styles.roundActionButton}>
+              <Text style={{ fontSize: 24 }}>🚿</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setActiveActionSheet('play')} style={styles.roundActionButton}>
+              <Text style={{ fontSize: 24 }}>⚽</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
       )}
 
-      {/* Action Buttons */}
-      {showHUD && !isGameOver && (
-        <View style={{ position: 'absolute', bottom: 30, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-evenly', zIndex: 1 }}>
-          <TouchableOpacity
-            onPress={() => setActiveActionSheet('food')}
-            style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8 }}
-          >
-            <Text style={{ color: 'white', fontWeight: 'bold' }}>Nakarm</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setActiveActionSheet('energy')}
-            style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8 }}
-          >
-            <Text style={{ color: 'white', fontWeight: 'bold' }}>Sen</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setActiveActionSheet('hygiene')}
-            style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8 }}
-          >
-            <Text style={{ color: 'white', fontWeight: 'bold' }}>Umyj</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setActiveActionSheet('play')}
-            style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8 }}
-          >
-            <Text style={{ color: 'white', fontWeight: 'bold' }}>Zabawa</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {/* Central Button */}
+      <TouchableOpacity onPress={() => setShowHUD(!showHUD)} style={styles.centralButton}>
+        <Text style={{ fontSize: 30 }}>🐾</Text>
+      </TouchableOpacity>
 
       {/* Action Sheet */}
       {activeActionSheet !== null && (
-        <View style={{
-          position: 'absolute',
-          bottom: 120,
-          width: '90%',
-          alignSelf: 'center',
-          backgroundColor: 'rgba(0,0,0,0.8)',
-          padding: 15,
-          borderRadius: 10,
-          zIndex: 20
-        }}>
-          {activeActionSheet === 'food' && (
-            <>
-              <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' }}>Jedzenie</Text>
-              <TouchableOpacity
-                style={{ backgroundColor: inventory.snack > 0 ? '#4CAF50' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
-                disabled={inventory.snack <= 0}
-                onPress={() => {
-                  if (inventory.snack > 0) {
-                    setInventory(prev => ({ ...prev, snack: prev.snack - 1 }));
-                    setHunger(prev => Math.min(prev + 20, 100));
-                    setActiveActionSheet(null);
-                  }
-                }}
-              >
-                <Text style={{ color: 'white', textAlign: 'center' }}>Zjedz Przekąskę ({inventory.snack}) +20 Głodu</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={{ backgroundColor: inventory.dinner > 0 ? '#FF9800' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
-                disabled={inventory.dinner <= 0}
-                onPress={() => {
-                  if (inventory.dinner > 0) {
-                    setInventory(prev => ({ ...prev, dinner: prev.dinner - 1 }));
-                    setHunger(prev => Math.min(prev + 50, 100));
-                    setActiveActionSheet(null);
-                  }
-                }}
-              >
-                <Text style={{ color: 'white', textAlign: 'center' }}>Zjedz Obiad ({inventory.dinner}) +50 Głodu</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={{ backgroundColor: inventory.hungerBuster > 0 ? '#9C27B0' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
-                disabled={inventory.hungerBuster <= 0}
-                onPress={() => {
-                  if (inventory.hungerBuster > 0) {
-                    setInventory(prev => ({ ...prev, hungerBuster: prev.hungerBuster - 1 }));
-                    setHunger(100);
-                    setHungerBuffUntil(Date.now() + 12 * 60 * 60 * 1000);
-                    setActiveActionSheet(null);
-                  }
-                }}
-              >
-                <Text style={{ color: 'white', textAlign: 'center' }}>Użyj Buster Głodu 12h ({inventory.hungerBuster})</Text>
-              </TouchableOpacity>
-            </>
-          )}
-
-          {activeActionSheet === 'energy' && (
-            <>
-              <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' }}>Energia</Text>
-              <TouchableOpacity
-                style={{ backgroundColor: inventory.coffee > 0 ? '#795548' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
-                disabled={inventory.coffee <= 0}
-                onPress={() => {
-                   if (inventory.coffee > 0) {
-                     setInventory(prev => ({ ...prev, coffee: prev.coffee - 1 }));
-                     setEnergy(prev => Math.min(prev + 40, 100));
-                     setActiveActionSheet(null);
-                   }
-                }}
-              >
-                <Text style={{ color: 'white', textAlign: 'center' }}>Wypij Kawę ({inventory.coffee}) +40 Energii</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={{ backgroundColor: isSleeping ? '#FFD700' : '#483D8B', padding: 10, borderRadius: 5, marginBottom: 10 }}
-                onPress={() => {
-                  setIsSleeping(!isSleeping);
-                  setActiveActionSheet(null);
-                }}
-              >
-                <Text style={{ color: isSleeping ? 'black' : 'white', textAlign: 'center' }}>{isSleeping ? 'Obudź' : 'Uśpij'}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={{ backgroundColor: inventory.energyBuster > 0 ? '#9C27B0' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
-                disabled={inventory.energyBuster <= 0}
-                onPress={() => {
-                  if (inventory.energyBuster > 0) {
-                    setInventory(prev => ({ ...prev, energyBuster: prev.energyBuster - 1 }));
-                    setEnergy(100);
-                    setEnergyBuffUntil(Date.now() + 12 * 60 * 60 * 1000);
-                    setActiveActionSheet(null);
-                  }
-                }}
-              >
-                <Text style={{ color: 'white', textAlign: 'center' }}>Użyj Buster Energii 12h ({inventory.energyBuster})</Text>
-              </TouchableOpacity>
-            </>
-          )}
-
-          {activeActionSheet === 'hygiene' && (
-            <>
-              <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' }}>Higiena</Text>
-              <TouchableOpacity
-                style={{ backgroundColor: '#03A9F4', padding: 10, borderRadius: 5, marginBottom: 10 }}
-                onPress={() => {
-                  setHygiene(prev => Math.min(prev + 30, 100));
-                  setActiveActionSheet(null);
-                }}
-              >
-                <Text style={{ color: 'white', textAlign: 'center' }}>Umyj Bobasa (Darmowe) +30 Higieny</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={{ backgroundColor: coins >= 5 ? '#E91E63' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
-                disabled={coins < 5}
-                onPress={() => {
-                  if (coins >= 5) {
-                    setCoins(prev => prev - 5);
-                    setRoomHygiene(100);
-                    setActiveActionSheet(null);
-                  }
-                }}
-              >
-                <Text style={{ color: 'white', textAlign: 'center' }}>Posprzątaj Pokój (5 Monet)</Text>
-              </TouchableOpacity>
-            </>
-          )}
-
-          {activeActionSheet === 'play' && (
-            <>
-              <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' }}>Zabawa</Text>
-              <TouchableOpacity
-                style={{ backgroundColor: '#8BC34A', padding: 10, borderRadius: 5, marginBottom: 10 }}
-                onPress={() => {
-                  setHappiness(prev => Math.min(prev + 10, 100));
-                  setEnergy(prev => Math.max(prev - 5, 0));
-                  setHygiene(prev => Math.max(prev - 5, 0));
-                  setLaziness(prev => prev + 5);
-                  setActiveActionSheet(null);
-                }}
-              >
-                <Text style={{ color: 'white', textAlign: 'center' }}>Odbijanie piłki (Darmowe) +10 Zad, -5 En/Hig, +5 Len</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={{ backgroundColor: coins >= 10 ? '#FF5722' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
-                disabled={coins < 10}
-                onPress={() => {
-                   if (coins >= 10) {
-                     setCoins(prev => prev - 10);
-                     setHappiness(prev => Math.min(prev + 20, 100));
-                     setEnergy(prev => Math.max(prev - 20, 0));
-                     setHygiene(prev => Math.max(prev - 15, 0));
-                     setStrength(prev => prev + 10);
-                     setActiveActionSheet(null);
-                   }
-                }}
-              >
-                <Text style={{ color: 'white', textAlign: 'center' }}>Trening Siłowy (10 Monet) +20 Zad, -20 En, -15 Hig, +10 Siły</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={{ backgroundColor: coins >= 5 ? '#9C27B0' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
-                disabled={coins < 5}
-                onPress={() => {
-                   if (coins >= 5) {
-                     setCoins(prev => prev - 5);
-                     setHappiness(prev => Math.min(prev + 30, 100));
-                     setEnergy(prev => Math.max(prev - 15, 0));
-                     setIntelligence(prev => prev + 10);
-                     setActiveActionSheet(null);
-                   }
-                }}
-              >
-                <Text style={{ color: 'white', textAlign: 'center' }}>Gra Logiczna (5 Monet) +30 Zad, -15 En, +10 Int</Text>
-              </TouchableOpacity>
-            </>
-          )}
-
-          <TouchableOpacity
-            style={{ backgroundColor: '#d32f2f', padding: 10, borderRadius: 5, marginTop: 5 }}
-            onPress={() => setActiveActionSheet(null)}
-          >
-            <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>Zamknij</Text>
+        <View style={styles.sheetContainer}>
+          <TouchableOpacity onPress={() => setActiveActionSheet(null)} style={styles.closeButton}>
+             <Text style={{ color: 'white', fontSize: 14 }}>❌</Text>
           </TouchableOpacity>
+          <Text style={styles.sheetHeader}>
+            {activeActionSheet === 'food' ? 'Jedzenie' :
+             activeActionSheet === 'energy' ? 'Energia' :
+             activeActionSheet === 'hygiene' ? 'Higiena' : 'Zabawa'}
+          </Text>
+
+          <ScrollView horizontal={true} contentContainerStyle={{ gap: 10, paddingHorizontal: 10 }} showsHorizontalScrollIndicator={false}>
+            {activeActionSheet === 'food' && (
+              <>
+                <TouchableOpacity
+                  style={[styles.tile, inventory.snack <= 0 && { opacity: 0.5 }]}
+                  disabled={inventory.snack <= 0}
+                  onPress={() => {
+                    if (inventory.snack > 0) {
+                      setInventory(prev => ({ ...prev, snack: prev.snack - 1 }));
+                      setHunger(prev => Math.min(prev + 20, 100));
+                      setActiveActionSheet(null);
+                    }
+                  }}
+                >
+                  <Text style={styles.tileLabel}>Przekąska</Text>
+                  <Text style={styles.tileIcon}>🍎</Text>
+                  <Text style={styles.tileSubLabel}>Posiadasz: {inventory.snack}</Text>
+                  <View style={[styles.tileButton, { backgroundColor: inventory.snack > 0 ? '#4CAF50' : '#555' }]}>
+                    <Text style={styles.tileButtonText}>Zjedz (+20)</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.tile, inventory.dinner <= 0 && { opacity: 0.5 }]}
+                  disabled={inventory.dinner <= 0}
+                  onPress={() => {
+                    if (inventory.dinner > 0) {
+                      setInventory(prev => ({ ...prev, dinner: prev.dinner - 1 }));
+                      setHunger(prev => Math.min(prev + 50, 100));
+                      setActiveActionSheet(null);
+                    }
+                  }}
+                >
+                  <Text style={styles.tileLabel}>Obiad</Text>
+                  <Text style={styles.tileIcon}>🍱</Text>
+                  <Text style={styles.tileSubLabel}>Posiadasz: {inventory.dinner}</Text>
+                  <View style={[styles.tileButton, { backgroundColor: inventory.dinner > 0 ? '#FF9800' : '#555' }]}>
+                    <Text style={styles.tileButtonText}>Zjedz (+50)</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.tile, inventory.hungerBuster <= 0 && { opacity: 0.5 }]}
+                  disabled={inventory.hungerBuster <= 0}
+                  onPress={() => {
+                    if (inventory.hungerBuster > 0) {
+                      setInventory(prev => ({ ...prev, hungerBuster: prev.hungerBuster - 1 }));
+                      setHunger(100);
+                      setHungerBuffUntil(Date.now() + 12 * 60 * 60 * 1000);
+                      setActiveActionSheet(null);
+                    }
+                  }}
+                >
+                  <Text style={styles.tileLabel}>Buster Głodu</Text>
+                  <Text style={styles.tileIcon}>🛡️</Text>
+                  <Text style={styles.tileSubLabel}>Posiadasz: {inventory.hungerBuster}</Text>
+                  <View style={[styles.tileButton, { backgroundColor: inventory.hungerBuster > 0 ? '#9C27B0' : '#555' }]}>
+                    <Text style={styles.tileButtonText}>Użyj (12h)</Text>
+                  </View>
+                </TouchableOpacity>
+              </>
+            )}
+
+            {activeActionSheet === 'energy' && (
+              <>
+                <TouchableOpacity
+                  style={[styles.tile, inventory.coffee <= 0 && { opacity: 0.5 }]}
+                  disabled={inventory.coffee <= 0}
+                  onPress={() => {
+                     if (inventory.coffee > 0) {
+                       setInventory(prev => ({ ...prev, coffee: prev.coffee - 1 }));
+                       setEnergy(prev => Math.min(prev + 40, 100));
+                       setActiveActionSheet(null);
+                     }
+                  }}
+                >
+                  <Text style={styles.tileLabel}>Kawa</Text>
+                  <Text style={styles.tileIcon}>☕</Text>
+                  <Text style={styles.tileSubLabel}>Posiadasz: {inventory.coffee}</Text>
+                  <View style={[styles.tileButton, { backgroundColor: inventory.coffee > 0 ? '#795548' : '#555' }]}>
+                    <Text style={styles.tileButtonText}>Wypij (+40)</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.tile}
+                  onPress={() => {
+                    setIsSleeping(!isSleeping);
+                    setActiveActionSheet(null);
+                  }}
+                >
+                  <Text style={styles.tileLabel}>{isSleeping ? 'Obudź' : 'Uśpij'}</Text>
+                  <Text style={styles.tileIcon}>{isSleeping ? '☀️' : '💤'}</Text>
+                  <Text style={styles.tileSubLabel}>{isSleeping ? 'Wstawaj!' : 'Dobranoc'}</Text>
+                  <View style={[styles.tileButton, { backgroundColor: isSleeping ? '#FFD700' : '#483D8B' }]}>
+                    <Text style={styles.tileButtonText}>{isSleeping ? 'Obudź się' : 'Idź spać'}</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.tile, inventory.energyBuster <= 0 && { opacity: 0.5 }]}
+                  disabled={inventory.energyBuster <= 0}
+                  onPress={() => {
+                    if (inventory.energyBuster > 0) {
+                      setInventory(prev => ({ ...prev, energyBuster: prev.energyBuster - 1 }));
+                      setEnergy(100);
+                      setEnergyBuffUntil(Date.now() + 12 * 60 * 60 * 1000);
+                      setActiveActionSheet(null);
+                    }
+                  }}
+                >
+                  <Text style={styles.tileLabel}>Buster Energii</Text>
+                  <Text style={styles.tileIcon}>⚡</Text>
+                  <Text style={styles.tileSubLabel}>Posiadasz: {inventory.energyBuster}</Text>
+                  <View style={[styles.tileButton, { backgroundColor: inventory.energyBuster > 0 ? '#9C27B0' : '#555' }]}>
+                    <Text style={styles.tileButtonText}>Użyj (12h)</Text>
+                  </View>
+                </TouchableOpacity>
+              </>
+            )}
+
+            {activeActionSheet === 'hygiene' && (
+              <>
+                <TouchableOpacity
+                  style={styles.tile}
+                  onPress={() => {
+                    setHygiene(prev => Math.min(prev + 30, 100));
+                    setActiveActionSheet(null);
+                  }}
+                >
+                  <Text style={styles.tileLabel}>Umyj Bobasa</Text>
+                  <Text style={styles.tileIcon}>🛁</Text>
+                  <Text style={styles.tileSubLabel}>Darmowe</Text>
+                  <View style={[styles.tileButton, { backgroundColor: '#03A9F4' }]}>
+                    <Text style={styles.tileButtonText}>Umyj (+30)</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.tile, coins < 5 && { opacity: 0.5 }]}
+                  disabled={coins < 5}
+                  onPress={() => {
+                    if (coins >= 5) {
+                      setCoins(prev => prev - 5);
+                      setRoomHygiene(100);
+                      setActiveActionSheet(null);
+                    }
+                  }}
+                >
+                  <Text style={styles.tileLabel}>Posprzątaj</Text>
+                  <Text style={styles.tileIcon}>🧹</Text>
+                  <Text style={styles.tileSubLabel}>Koszt: 5 🪙</Text>
+                  <View style={[styles.tileButton, { backgroundColor: coins >= 5 ? '#E91E63' : '#555' }]}>
+                    <Text style={styles.tileButtonText}>Sprzątaj</Text>
+                  </View>
+                </TouchableOpacity>
+              </>
+            )}
+
+            {activeActionSheet === 'play' && (
+              <>
+                <TouchableOpacity
+                  style={styles.tile}
+                  onPress={() => {
+                    setHappiness(prev => Math.min(prev + 10, 100));
+                    setEnergy(prev => Math.max(prev - 5, 0));
+                    setHygiene(prev => Math.max(prev - 5, 0));
+                    setLaziness(prev => prev + 5);
+                    setActiveActionSheet(null);
+                  }}
+                >
+                  <Text style={styles.tileLabel}>Odbijanie</Text>
+                  <Text style={styles.tileIcon}>⚽</Text>
+                  <Text style={styles.tileSubLabel}>Darmowe</Text>
+                  <View style={[styles.tileButton, { backgroundColor: '#8BC34A' }]}>
+                    <Text style={styles.tileButtonText}>Graj (+10)</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.tile, coins < 10 && { opacity: 0.5 }]}
+                  disabled={coins < 10}
+                  onPress={() => {
+                     if (coins >= 10) {
+                       setCoins(prev => prev - 10);
+                       setHappiness(prev => Math.min(prev + 20, 100));
+                       setEnergy(prev => Math.max(prev - 20, 0));
+                       setHygiene(prev => Math.max(prev - 15, 0));
+                       setStrength(prev => prev + 10);
+                       setActiveActionSheet(null);
+                     }
+                  }}
+                >
+                  <Text style={styles.tileLabel}>Trening</Text>
+                  <Text style={styles.tileIcon}>🏋️</Text>
+                  <Text style={styles.tileSubLabel}>Koszt: 10 🪙</Text>
+                  <View style={[styles.tileButton, { backgroundColor: coins >= 10 ? '#FF5722' : '#555' }]}>
+                    <Text style={styles.tileButtonText}>Ćwicz (+20)</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.tile, coins < 5 && { opacity: 0.5 }]}
+                  disabled={coins < 5}
+                  onPress={() => {
+                     if (coins >= 5) {
+                       setCoins(prev => prev - 5);
+                       setHappiness(prev => Math.min(prev + 30, 100));
+                       setEnergy(prev => Math.max(prev - 15, 0));
+                       setIntelligence(prev => prev + 10);
+                       setActiveActionSheet(null);
+                     }
+                  }}
+                >
+                  <Text style={styles.tileLabel}>Logika</Text>
+                  <Text style={styles.tileIcon}>🧩</Text>
+                  <Text style={styles.tileSubLabel}>Koszt: 5 🪙</Text>
+                  <View style={[styles.tileButton, { backgroundColor: coins >= 5 ? '#9C27B0' : '#555' }]}>
+                    <Text style={styles.tileButtonText}>Graj (+30)</Text>
+                  </View>
+                </TouchableOpacity>
+              </>
+            )}
+          </ScrollView>
         </View>
       )}
 
@@ -974,3 +1025,176 @@ export default function App() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  // Modal Styles
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    zIndex: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    backgroundColor: '#333',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+
+  // HUD Styles
+  hudContainer: {
+    position: 'absolute',
+    bottom: 120, // Above the central button
+    left: 20,
+    right: 80, // Leave space for right navigation
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    borderRadius: 20,
+    padding: 15,
+    zIndex: 1,
+  },
+  statRow: {
+    marginBottom: 10,
+  },
+  statHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+  },
+  statLabel: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  statValue: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 12,
+  },
+  statBarBg: {
+    height: 15,
+    backgroundColor: '#555',
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+
+  // Action Buttons Row (in HUD)
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 15,
+    paddingHorizontal: 10,
+  },
+  roundActionButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+
+  // Central Button
+  centralButton: {
+    position: 'absolute',
+    bottom: 30,
+    alignSelf: 'center',
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#FF4081', // Premium pink/red
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.5,
+    shadowRadius: 5,
+    zIndex: 50,
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+
+  // Action Sheet (Horizontal)
+  sheetContainer: {
+    position: 'absolute',
+    bottom: 120,
+    width: '95%',
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    borderRadius: 20,
+    padding: 15,
+    zIndex: 20,
+    elevation: 10,
+  },
+  sheetHeader: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  tile: {
+    width: 120,
+    height: 160,
+    backgroundColor: '#333',
+    borderRadius: 15,
+    padding: 10,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginRight: 10,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  tileIcon: {
+    fontSize: 40,
+  },
+  tileLabel: {
+    color: 'white',
+    fontSize: 12,
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  tileSubLabel: {
+    color: '#aaa',
+    fontSize: 10,
+    textAlign: 'center',
+  },
+  tileButton: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    width: '100%',
+    alignItems: 'center',
+  },
+  tileButtonText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+});
