@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { GLView } from 'expo-gl';
 import { Renderer } from 'expo-three';
 import * as THREE from 'three';
@@ -16,16 +16,7 @@ export default function App() {
   const gameOverRef = useRef(false);
 
   const [showHUD, setShowHUD] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const lastTap = useRef(0);
-
-  const handleDoubleTap = () => {
-    const now = Date.now();
-    if (now - lastTap.current < 300) {
-      setShowHUD((prev) => !prev);
-    }
-    lastTap.current = now;
-  };
+  const [activeModal, setActiveModal] = useState(null);
 
   useEffect(() => {
     gameOverRef.current = isGameOver;
@@ -212,34 +203,72 @@ export default function App() {
 
   return (
     <View style={{ flex: 1 }}>
-      <TouchableWithoutFeedback onPress={handleDoubleTap}>
-        <View style={{ flex: 1 }}>
-          <GLView
-            style={{ flex: 1 }}
-            onContextCreate={onContextCreate}
-          />
-        </View>
-      </TouchableWithoutFeedback>
+      <View style={{ flex: 1 }}>
+        <GLView
+          style={{ flex: 1 }}
+          onContextCreate={onContextCreate}
+        />
+      </View>
 
-      {/* Menu Button - Always Visible */}
-      <TouchableOpacity
-         onPress={() => setIsMenuOpen(true)}
-         style={{ position: 'absolute', top: 40, right: 20, zIndex: 10, padding: 10, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 5 }}>
-         <Text style={{ color: 'white', fontWeight: 'bold' }}>☰ Menu</Text>
-      </TouchableOpacity>
+      {/* Right Side Vertical Navigation (TikTok Style) */}
+      <View style={{
+        position: 'absolute',
+        right: 15,
+        bottom: 100,
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 20
+      }}>
+        {/* Stats Button */}
+        <TouchableOpacity
+          onPress={() => setShowHUD(!showHUD)}
+          style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}
+        >
+          <Text style={{ fontSize: 24 }}>📊</Text>
+        </TouchableOpacity>
 
-      {/* Menu Overlay */}
-      {isMenuOpen && (
+        {/* Chat Button */}
+        <TouchableOpacity
+          onPress={() => setActiveModal('Czat')}
+          style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}
+        >
+          <Text style={{ fontSize: 24 }}>💬</Text>
+        </TouchableOpacity>
+
+        {/* Shop Button */}
+        <TouchableOpacity
+          onPress={() => setActiveModal('Sklep')}
+          style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}
+        >
+          <Text style={{ fontSize: 24 }}>🛒</Text>
+        </TouchableOpacity>
+
+        {/* Inventory Button */}
+        <TouchableOpacity
+          onPress={() => setActiveModal('Plecak')}
+          style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}
+        >
+          <Text style={{ fontSize: 24 }}>🎒</Text>
+        </TouchableOpacity>
+
+        {/* Settings Button */}
+        <TouchableOpacity
+          onPress={() => setActiveModal('Ustawienia')}
+          style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}
+        >
+          <Text style={{ fontSize: 24 }}>⚙️</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Universal Modal */}
+      {activeModal !== null && (
          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 20, justifyContent: 'center', alignItems: 'center' }}>
             <View style={{ width: '80%', backgroundColor: '#333', borderRadius: 20, padding: 20, alignItems: 'center' }}>
-               <Text style={{ color: 'white', fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>Menu Główne</Text>
-               <TouchableOpacity style={{ padding: 10, marginBottom: 10, backgroundColor: '#555', borderRadius: 5, width: '100%', alignItems: 'center' }}>
-                  <Text style={{ color: 'white' }}>Ustawienia</Text>
-               </TouchableOpacity>
-               <TouchableOpacity style={{ padding: 10, marginBottom: 10, backgroundColor: '#555', borderRadius: 5, width: '100%', alignItems: 'center' }}>
-                  <Text style={{ color: 'white' }}>Sklep</Text>
-               </TouchableOpacity>
-               <TouchableOpacity onPress={() => setIsMenuOpen(false)} style={{ padding: 10, marginTop: 10, backgroundColor: '#d32f2f', borderRadius: 5, width: '100%', alignItems: 'center' }}>
+               <Text style={{ color: 'white', fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>Witaj w: {activeModal}</Text>
+               <View style={{ height: 100, justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
+                 <Text style={{ color: '#aaa' }}>Treść dla {activeModal} pojawi się wkrótce...</Text>
+               </View>
+               <TouchableOpacity onPress={() => setActiveModal(null)} style={{ padding: 10, marginTop: 10, backgroundColor: '#d32f2f', borderRadius: 5, width: '100%', alignItems: 'center' }}>
                   <Text style={{ color: 'white', fontWeight: 'bold' }}>Zamknij</Text>
                </TouchableOpacity>
             </View>
@@ -247,7 +276,7 @@ export default function App() {
       )}
 
       {showHUD && (
-      <View style={{ position: 'absolute', top: 50, left: 20, right: 20, zIndex: 1 }}>
+      <View style={{ position: 'absolute', bottom: 120, left: 20, width: '60%', zIndex: 1 }}>
         {/* Hunger */}
         <Text style={{ color: 'white', marginBottom: 5 }}>Głód</Text>
         <View style={{ height: 20, backgroundColor: '#333', borderRadius: 10, marginBottom: 10 }}>
