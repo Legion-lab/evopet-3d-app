@@ -19,7 +19,9 @@ export default function App() {
   const [hygiene, setHygiene] = useState(80);
   const [happiness, setHappiness] = useState(80);
   const [coins, setCoins] = useState(50);
-  const [inventory, setInventory] = useState({ snack: 0, dinner: 0, coffee: 0 });
+  const [inventory, setInventory] = useState({ snack: 0, dinner: 0, coffee: 0, hungerBuster: 0, energyBuster: 0 });
+  const [hungerBuffUntil, setHungerBuffUntil] = useState(0);
+  const [energyBuffUntil, setEnergyBuffUntil] = useState(0);
   const [isSleeping, setIsSleeping] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
@@ -54,31 +56,40 @@ export default function App() {
         const jsonValue = stores['@pet_stats'];
         if (jsonValue != null) {
           const data = JSON.parse(jsonValue);
-          let { hunger, energy, hygiene, happiness, coins, isSleeping, lastSavedTime, roomHygiene, strength, intelligence, laziness, inventory } = data;
+          let { hunger, energy, hygiene, happiness, coins, isSleeping, lastSavedTime, roomHygiene, strength, intelligence, laziness, inventory, hungerBuffUntil, energyBuffUntil } = data;
 
           // Default roomHygiene to 100 if missing
           if (roomHygiene === undefined) roomHygiene = 100;
           if (strength === undefined) strength = 0;
           if (intelligence === undefined) intelligence = 0;
           if (laziness === undefined) laziness = 0;
-          if (inventory === undefined) inventory = { snack: 0, dinner: 0, coffee: 0 };
+          if (inventory === undefined) inventory = { snack: 0, dinner: 0, coffee: 0, hungerBuster: 0, energyBuster: 0 };
+          if (inventory.hungerBuster === undefined) inventory.hungerBuster = 0;
+          if (inventory.energyBuster === undefined) inventory.energyBuster = 0;
+          if (hungerBuffUntil === undefined) hungerBuffUntil = 0;
+          if (energyBuffUntil === undefined) energyBuffUntil = 0;
 
           if (lastSavedTime) {
             const now = Date.now();
             const elapsedSeconds = Math.floor((now - lastSavedTime) / 1000);
 
             if (elapsedSeconds > 0) {
+              // Calculate effective decay time based on buffs
+              // If buff covers the time, decay is 0. Else it is time since buff ended (or since save if buff ended before save)
+              const hungerDecayTime = Math.max(0, (now - Math.max(lastSavedTime, hungerBuffUntil)) / 1000);
+              const energyDecayTime = Math.max(0, (now - Math.max(lastSavedTime, energyBuffUntil)) / 1000);
+
               if (isSleeping) {
                 // Sleep Logic: Energy increases, others decrease slower
-                energy = Math.min(energy + elapsedSeconds * 2, 100);
-                hunger = Math.max(hunger - elapsedSeconds * 0.5, 0);
+                energy = Math.min(energy + elapsedSeconds * 2, 100); // Sleep always regenerates energy
+                hunger = Math.max(hunger - hungerDecayTime * 0.5, 0);
                 hygiene = Math.max(hygiene - elapsedSeconds * 0.5, 0);
                 happiness = Math.max(happiness - elapsedSeconds * 0.5, 0);
                 roomHygiene = Math.max(roomHygiene - elapsedSeconds * 0.5, 0);
               } else {
                 // Awake Logic: Standard decay
-                hunger = Math.max(hunger - elapsedSeconds, 0);
-                energy = Math.max(energy - elapsedSeconds, 0);
+                hunger = Math.max(hunger - hungerDecayTime, 0);
+                energy = Math.max(energy - energyDecayTime, 0);
                 hygiene = Math.max(hygiene - elapsedSeconds, 0);
                 happiness = Math.max(happiness - elapsedSeconds, 0);
                 roomHygiene = Math.max(roomHygiene - elapsedSeconds, 0);
@@ -95,6 +106,8 @@ export default function App() {
           setIntelligence(intelligence);
           setLaziness(laziness);
           setInventory(inventory);
+          setHungerBuffUntil(hungerBuffUntil);
+          setEnergyBuffUntil(energyBuffUntil);
           if (coins !== undefined) setCoins(coins);
           if (isSleeping !== undefined) setIsSleeping(isSleeping);
         }
@@ -125,7 +138,7 @@ export default function App() {
     if (isLoaded) {
       const saveState = async () => {
         try {
-          const data = { hunger, energy, hygiene, happiness, coins, isSleeping, roomHygiene, strength, intelligence, laziness, inventory, lastSavedTime: Date.now() };
+          const data = { hunger, energy, hygiene, happiness, coins, isSleeping, roomHygiene, strength, intelligence, laziness, inventory, hungerBuffUntil, energyBuffUntil, lastSavedTime: Date.now() };
           await AsyncStorage.setItem('@pet_stats', JSON.stringify(data));
         } catch (e) {
           console.error("Failed to save state", e);
@@ -133,7 +146,7 @@ export default function App() {
       };
       saveState();
     }
-  }, [hunger, energy, hygiene, happiness, coins, isSleeping, roomHygiene, strength, intelligence, laziness, inventory, isLoaded]);
+  }, [hunger, energy, hygiene, happiness, coins, isSleeping, roomHygiene, strength, intelligence, laziness, inventory, hungerBuffUntil, energyBuffUntil, isLoaded]);
 
   // Save onboarding/profile state separately
   useEffect(() => {
@@ -149,24 +162,30 @@ export default function App() {
     const interval = setInterval(() => {
       if (gameOverRef.current) return;
 
+      const now = Date.now();
+      const isHungerProtected = now <= hungerBuffUntil;
+      const isEnergyProtected = now <= energyBuffUntil;
+
       if (isSleeping) {
         // Sleep Mode: Energy +2, others -0.5
         setEnergy((prev) => Math.min(prev + 2, 100));
-        setHunger((prev) => Math.max(prev - 0.5, 0));
+        if (!isHungerProtected) setHunger((prev) => Math.max(prev - 0.5, 0));
         setHygiene((prev) => Math.max(prev - 0.5, 0));
         setHappiness((prev) => Math.max(prev - 0.5, 0));
         setRoomHygiene((prev) => Math.max(prev - 0.5, 0));
       } else {
         // Awake Mode: Normal decay
-        setHunger((prev) => {
-          const newValue = prev - 1;
-          if (newValue <= 0) {
-            setIsGameOver(true);
-            return 0;
-          }
-          return newValue;
-        });
-        setEnergy((prev) => Math.max(prev - 1, 0));
+        if (!isHungerProtected) {
+          setHunger((prev) => {
+            const newValue = prev - 1;
+            if (newValue <= 0) {
+              setIsGameOver(true);
+              return 0;
+            }
+            return newValue;
+          });
+        }
+        if (!isEnergyProtected) setEnergy((prev) => Math.max(prev - 1, 0));
         setHygiene((prev) => Math.max(prev - 1, 0));
         setHappiness((prev) => Math.max(prev - 1, 0));
         setRoomHygiene((prev) => Math.max(prev - 1, 0));
@@ -174,7 +193,7 @@ export default function App() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isSleeping]);
+  }, [isSleeping, hungerBuffUntil, energyBuffUntil]);
 
   useEffect(() => {
     if (sphereRef.current) {
@@ -587,12 +606,40 @@ export default function App() {
                    >
                      <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>Kawa (15 Monet)</Text>
                    </TouchableOpacity>
+
+                   <TouchableOpacity
+                     style={{ backgroundColor: coins >= 50 ? '#9C27B0' : '#555', padding: 15, borderRadius: 10, marginBottom: 10, width: '100%' }}
+                     disabled={coins < 50}
+                     onPress={() => {
+                       if (coins >= 50) {
+                         setCoins(prev => prev - 50);
+                         setInventory(prev => ({ ...prev, hungerBuster: prev.hungerBuster + 1 }));
+                       }
+                     }}
+                   >
+                     <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>Magiczny Buster Głodu (50 Monet)</Text>
+                   </TouchableOpacity>
+
+                   <TouchableOpacity
+                     style={{ backgroundColor: coins >= 50 ? '#9C27B0' : '#555', padding: 15, borderRadius: 10, marginBottom: 10, width: '100%' }}
+                     disabled={coins < 50}
+                     onPress={() => {
+                       if (coins >= 50) {
+                         setCoins(prev => prev - 50);
+                         setInventory(prev => ({ ...prev, energyBuster: prev.energyBuster + 1 }));
+                       }
+                     }}
+                   >
+                     <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>Magiczny Buster Energii (50 Monet)</Text>
+                   </TouchableOpacity>
                  </View>
                ) : activeModal === 'Plecak' ? (
                  <View style={{ width: '100%', alignItems: 'center' }}>
                     <Text style={{ color: 'white', fontSize: 18, marginBottom: 10 }}>Przekąski: {inventory.snack}</Text>
                     <Text style={{ color: 'white', fontSize: 18, marginBottom: 10 }}>Obiady: {inventory.dinner}</Text>
                     <Text style={{ color: 'white', fontSize: 18, marginBottom: 10 }}>Kawy: {inventory.coffee}</Text>
+                    <Text style={{ color: 'white', fontSize: 18, marginBottom: 10 }}>Buster Głodu: {inventory.hungerBuster}</Text>
+                    <Text style={{ color: 'white', fontSize: 18, marginBottom: 10 }}>Buster Energii: {inventory.energyBuster}</Text>
                  </View>
                ) : (
                  <View style={{ height: 100, justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
@@ -709,6 +756,20 @@ export default function App() {
               >
                 <Text style={{ color: 'white', textAlign: 'center' }}>Zjedz Obiad ({inventory.dinner}) +50 Głodu</Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                style={{ backgroundColor: inventory.hungerBuster > 0 ? '#9C27B0' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
+                disabled={inventory.hungerBuster <= 0}
+                onPress={() => {
+                  if (inventory.hungerBuster > 0) {
+                    setInventory(prev => ({ ...prev, hungerBuster: prev.hungerBuster - 1 }));
+                    setHunger(100);
+                    setHungerBuffUntil(Date.now() + 12 * 60 * 60 * 1000);
+                    setActiveActionSheet(null);
+                  }
+                }}
+              >
+                <Text style={{ color: 'white', textAlign: 'center' }}>Użyj Buster Głodu 12h ({inventory.hungerBuster})</Text>
+              </TouchableOpacity>
             </>
           )}
 
@@ -736,6 +797,21 @@ export default function App() {
                 }}
               >
                 <Text style={{ color: isSleeping ? 'black' : 'white', textAlign: 'center' }}>{isSleeping ? 'Obudź' : 'Uśpij'}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{ backgroundColor: inventory.energyBuster > 0 ? '#9C27B0' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
+                disabled={inventory.energyBuster <= 0}
+                onPress={() => {
+                  if (inventory.energyBuster > 0) {
+                    setInventory(prev => ({ ...prev, energyBuster: prev.energyBuster - 1 }));
+                    setEnergy(100);
+                    setEnergyBuffUntil(Date.now() + 12 * 60 * 60 * 1000);
+                    setActiveActionSheet(null);
+                  }
+                }}
+              >
+                <Text style={{ color: 'white', textAlign: 'center' }}>Użyj Buster Energii 12h ({inventory.energyBuster})</Text>
               </TouchableOpacity>
             </>
           )}
