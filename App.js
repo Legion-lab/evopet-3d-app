@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, StyleSheet, Switch, Alert } from 'react-native';
 import { GLView } from 'expo-gl';
 import { Renderer } from 'expo-three';
 import * as THREE from 'three';
@@ -42,6 +42,9 @@ export default function App() {
   const [intelligence, setIntelligence] = useState(0);
   const [laziness, setLaziness] = useState(0);
 
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+
   useEffect(() => {
     gameOverRef.current = isGameOver;
   }, [isGameOver]);
@@ -49,7 +52,7 @@ export default function App() {
   useEffect(() => {
     const loadState = async () => {
       try {
-        const keys = ['@pet_stats', '@pet_name', '@user_name', '@is_first_launch', '@onboarding_step'];
+        const keys = ['@pet_stats', '@pet_name', '@user_name', '@is_first_launch', '@onboarding_step', '@sound_enabled', '@notifications_enabled'];
         const result = await AsyncStorage.multiGet(keys);
         const stores = Object.fromEntries(result);
 
@@ -125,6 +128,9 @@ export default function App() {
            setOnboardingStep(parseInt(stores['@onboarding_step'], 10));
         }
 
+        if (stores['@sound_enabled']) setSoundEnabled(JSON.parse(stores['@sound_enabled']));
+        if (stores['@notifications_enabled']) setNotificationsEnabled(JSON.parse(stores['@notifications_enabled']));
+
       } catch (e) {
         console.error("Failed to load state", e);
       } finally {
@@ -157,6 +163,14 @@ export default function App() {
        AsyncStorage.setItem('@onboarding_step', onboardingStep.toString());
     }
   }, [petName, userName, isFirstLaunch, onboardingStep, isLoaded]);
+
+  // Save settings
+  useEffect(() => {
+    if (isLoaded) {
+      AsyncStorage.setItem('@sound_enabled', JSON.stringify(soundEnabled));
+      AsyncStorage.setItem('@notifications_enabled', JSON.stringify(notificationsEnabled));
+    }
+  }, [soundEnabled, notificationsEnabled, isLoaded]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -319,6 +333,47 @@ export default function App() {
     } catch (e) {
       console.error("Failed to reset state", e);
     }
+  };
+
+  const confirmHardReset = () => {
+    Alert.alert(
+      'Uwaga',
+      'Czy na pewno chcesz usunąć cały postęp?',
+      [
+        { text: 'Anuluj', style: 'cancel' },
+        {
+          text: 'Resetuj',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await AsyncStorage.clear();
+              setHunger(80);
+              setEnergy(80);
+              setHygiene(80);
+              setHappiness(80);
+              setRoomHygiene(100);
+              setCoins(50);
+              setInventory({ snack: 0, dinner: 0, coffee: 0, hungerBuster: 0, energyBuster: 0 });
+              setHungerBuffUntil(0);
+              setEnergyBuffUntil(0);
+              setStrength(0);
+              setIntelligence(0);
+              setLaziness(0);
+              setIsGameOver(false);
+
+              setPetName('Bobas');
+              setUserName('Gracz');
+              setMessages([]);
+              setOnboardingStep(0);
+              setIsFirstLaunch(true);
+              setActiveModal(null);
+            } catch (e) {
+              console.error("Failed to hard reset", e);
+            }
+          }
+        }
+      ]
+    );
   };
 
   useEffect(() => {
@@ -522,9 +577,22 @@ export default function App() {
       {/* Universal Modal */}
       {activeModal !== null && (
          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-               <Text style={{ color: 'white', fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>Witaj w: {activeModal}</Text>
-               <TouchableOpacity onPress={() => setActiveModal(null)} style={styles.closeButton}>
+            <View style={[
+              styles.modalContent,
+              activeModal === 'Ustawienia' && { backgroundColor: '#F2F2F7', width: '95%', height: '85%', padding: 20 }
+            ]}>
+               <Text style={{
+                 color: activeModal === 'Ustawienia' ? '#000' : 'white',
+                 fontSize: 24,
+                 fontWeight: 'bold',
+                 marginBottom: 20
+               }}>
+                 {activeModal === 'Ustawienia' ? 'Ustawienia' : `Witaj w: ${activeModal}`}
+               </Text>
+               <TouchableOpacity
+                 onPress={() => setActiveModal(null)}
+                 style={[styles.closeButton, activeModal === 'Ustawienia' && { backgroundColor: 'rgba(0,0,0,0.1)' }]}
+               >
                   <Text style={{ color: 'white', fontSize: 14 }}>❌</Text>
                </TouchableOpacity>
 
@@ -682,6 +750,68 @@ export default function App() {
                        <Text style={{ fontSize: 50 }}>⚡</Text>
                        <Text style={{ color: '#aaa', fontWeight: 'bold' }}>Posiadasz: {inventory.energyBuster}</Text>
                      </View>
+                   </ScrollView>
+                 </View>
+               ) : activeModal === 'Ustawienia' ? (
+                 <View style={{ flex: 1, width: '100%' }}>
+                   <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+
+                     {/* ROZGRYWKA Group */}
+                     <View style={{ marginBottom: 25 }}>
+                       <Text style={{ color: '#888', fontSize: 12, fontWeight: 'bold', marginBottom: 5, marginLeft: 15 }}>ROZGRYWKA</Text>
+                       <View style={{ backgroundColor: '#FFF', borderRadius: 15, paddingHorizontal: 15, elevation: 2 }}>
+
+                         {/* Sound Row */}
+                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderColor: '#EEE' }}>
+                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                             <Text style={{ fontSize: 20 }}>🎵</Text>
+                             <Text style={{ fontSize: 16, color: '#000' }}>Dźwięki i Muzyka</Text>
+                           </View>
+                           <Switch
+                             trackColor={{ false: "#767577", true: "#4CAF50" }}
+                             thumbColor={soundEnabled ? "#f4f3f4" : "#f4f3f4"}
+                             ios_backgroundColor="#3e3e3e"
+                             onValueChange={() => setSoundEnabled(previousState => !previousState)}
+                             value={soundEnabled}
+                           />
+                         </View>
+
+                         {/* Notifications Row */}
+                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                             <Text style={{ fontSize: 20 }}>🔔</Text>
+                             <Text style={{ fontSize: 16, color: '#000' }}>Powiadomienia Push</Text>
+                           </View>
+                           <Switch
+                             trackColor={{ false: "#767577", true: "#4CAF50" }}
+                             thumbColor={notificationsEnabled ? "#f4f3f4" : "#f4f3f4"}
+                             ios_backgroundColor="#3e3e3e"
+                             onValueChange={() => setNotificationsEnabled(previousState => !previousState)}
+                             value={notificationsEnabled}
+                           />
+                         </View>
+                       </View>
+                     </View>
+
+                     {/* ACCOUNT Group */}
+                     <View style={{ marginBottom: 25 }}>
+                       <Text style={{ color: '#888', fontSize: 12, fontWeight: 'bold', marginBottom: 5, marginLeft: 15 }}>ZARZĄDZANIE KONTEM</Text>
+                       <View style={{ backgroundColor: '#FFF', borderRadius: 15, paddingHorizontal: 15, elevation: 2 }}>
+
+                         {/* Reset Row */}
+                         <TouchableOpacity
+                           onPress={confirmHardReset}
+                           style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 15 }}
+                         >
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                             <Text style={{ fontSize: 20 }}>💀</Text>
+                             <Text style={{ fontSize: 16, color: '#000' }}>Zacznij grę od nowa</Text>
+                           </View>
+                           <Text style={{ fontSize: 18, color: '#ccc' }}>{'>'}</Text>
+                         </TouchableOpacity>
+                       </View>
+                     </View>
+
                    </ScrollView>
                  </View>
                ) : (
