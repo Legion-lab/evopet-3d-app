@@ -22,6 +22,7 @@ export default function App() {
 
   const [showHUD, setShowHUD] = useState(false);
   const [activeModal, setActiveModal] = useState(null);
+  const [activeActionSheet, setActiveActionSheet] = useState(null);
 
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -341,26 +342,6 @@ export default function App() {
         <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#FFD700' }}>🪙 {coins}</Text>
       </View>
 
-      {/* Sleep Toggle Button (Top Right) */}
-      {!isGameOver && (
-        <TouchableOpacity
-          onPress={() => setIsSleeping(!isSleeping)}
-          style={{
-            position: 'absolute',
-            top: 40,
-            right: 20,
-            backgroundColor: isSleeping ? '#FFD700' : '#483D8B',
-            padding: 10,
-            borderRadius: 20,
-            zIndex: 10
-          }}
-        >
-          <Text style={{ color: isSleeping ? 'black' : 'white', fontWeight: 'bold' }}>
-            {isSleeping ? '☀️ Obudź' : '🌙 Uśpij'}
-          </Text>
-        </TouchableOpacity>
-      )}
-
       {/* Right Side Vertical Navigation (TikTok Style) */}
       <View style={{
         position: 'absolute',
@@ -526,31 +507,168 @@ export default function App() {
       {showHUD && !isGameOver && (
         <View style={{ position: 'absolute', bottom: 30, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-evenly', zIndex: 1 }}>
           <TouchableOpacity
-            onPress={() => setHunger(prev => Math.min(prev + 20, 100))}
+            onPress={() => setActiveActionSheet('food')}
             style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8 }}
           >
             <Text style={{ color: 'white', fontWeight: 'bold' }}>Nakarm</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => setEnergy(prev => Math.min(prev + 20, 100))}
+            onPress={() => setActiveActionSheet('energy')}
             style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8 }}
           >
             <Text style={{ color: 'white', fontWeight: 'bold' }}>Sen</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => setHygiene(prev => Math.min(prev + 20, 100))}
+            onPress={() => setActiveActionSheet('hygiene')}
             style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8 }}
           >
             <Text style={{ color: 'white', fontWeight: 'bold' }}>Umyj</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => setHappiness(prev => Math.min(prev + 20, 100))}
+            onPress={() => setActiveActionSheet('play')}
             style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8 }}
           >
             <Text style={{ color: 'white', fontWeight: 'bold' }}>Zabawa</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Action Sheet */}
+      {activeActionSheet !== null && (
+        <View style={{
+          position: 'absolute',
+          bottom: 120,
+          width: '90%',
+          alignSelf: 'center',
+          backgroundColor: 'rgba(0,0,0,0.8)',
+          padding: 15,
+          borderRadius: 10,
+          zIndex: 20
+        }}>
+          {activeActionSheet === 'food' && (
+            <>
+              <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' }}>Jedzenie</Text>
+              <TouchableOpacity
+                style={{ backgroundColor: '#4CAF50', padding: 10, borderRadius: 5, marginBottom: 10 }}
+                onPress={() => {
+                  setHunger(prev => Math.min(prev + 10, 100));
+                  setActiveActionSheet(null);
+                }}
+              >
+                <Text style={{ color: 'white', textAlign: 'center' }}>Przekąska (Darmowa) +10 Głodu</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ backgroundColor: coins >= 10 ? '#FF9800' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
+                disabled={coins < 10}
+                onPress={() => {
+                  if (coins >= 10) {
+                    setCoins(prev => prev - 10);
+                    setHunger(prev => Math.min(prev + 50, 100));
+                    setActiveActionSheet(null);
+                  }
+                }}
+              >
+                <Text style={{ color: 'white', textAlign: 'center' }}>Pełny Obiad (10 Monet) +50 Głodu</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {activeActionSheet === 'energy' && (
+            <>
+              <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' }}>Energia</Text>
+              <TouchableOpacity
+                style={{ backgroundColor: coins >= 15 ? '#795548' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
+                disabled={coins < 15}
+                onPress={() => {
+                   if (coins >= 15) {
+                     setCoins(prev => prev - 15);
+                     setEnergy(prev => Math.min(prev + 40, 100));
+                     setActiveActionSheet(null);
+                   }
+                }}
+              >
+                <Text style={{ color: 'white', textAlign: 'center' }}>Kawa (15 Monet) +40 Energii</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ backgroundColor: isSleeping ? '#FFD700' : '#483D8B', padding: 10, borderRadius: 5, marginBottom: 10 }}
+                onPress={() => {
+                  setIsSleeping(!isSleeping);
+                  setActiveActionSheet(null);
+                }}
+              >
+                <Text style={{ color: isSleeping ? 'black' : 'white', textAlign: 'center' }}>{isSleeping ? 'Obudź' : 'Uśpij'}</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {activeActionSheet === 'hygiene' && (
+            <>
+              <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' }}>Higiena</Text>
+              <TouchableOpacity
+                style={{ backgroundColor: '#03A9F4', padding: 10, borderRadius: 5, marginBottom: 10 }}
+                onPress={() => {
+                  setHygiene(prev => Math.min(prev + 20, 100));
+                  setActiveActionSheet(null);
+                }}
+              >
+                <Text style={{ color: 'white', textAlign: 'center' }}>Szybki Prysznic (Darmowy) +20 Higieny</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ backgroundColor: coins >= 10 ? '#E91E63' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
+                disabled={coins < 10}
+                onPress={() => {
+                  if (coins >= 10) {
+                    setCoins(prev => prev - 10);
+                    setHygiene(prev => Math.min(prev + 50, 100));
+                    setHappiness(prev => Math.min(prev + 10, 100));
+                    setActiveActionSheet(null);
+                  }
+                }}
+              >
+                <Text style={{ color: 'white', textAlign: 'center' }}>Kąpiel z Bąbelkami (10 Monet) +50 Higieny, +10 Zadowolenia</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {activeActionSheet === 'play' && (
+            <>
+              <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' }}>Zabawa</Text>
+              <TouchableOpacity
+                style={{ backgroundColor: '#8BC34A', padding: 10, borderRadius: 5, marginBottom: 10 }}
+                onPress={() => {
+                  setHappiness(prev => Math.min(prev + 10, 100));
+                  setEnergy(prev => Math.max(prev - 5, 0));
+                  setHygiene(prev => Math.max(prev - 5, 0));
+                  setActiveActionSheet(null);
+                }}
+              >
+                <Text style={{ color: 'white', textAlign: 'center' }}>Odbijanie piłki (Darmowe) +10 Zad, -5 En/Hig</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ backgroundColor: coins >= 5 ? '#9C27B0' : '#555', padding: 10, borderRadius: 5, marginBottom: 10 }}
+                disabled={coins < 5}
+                onPress={() => {
+                   if (coins >= 5) {
+                     setCoins(prev => prev - 5);
+                     setHappiness(prev => Math.min(prev + 30, 100));
+                     setEnergy(prev => Math.max(prev - 15, 0));
+                     setActiveActionSheet(null);
+                   }
+                }}
+              >
+                <Text style={{ color: 'white', textAlign: 'center' }}>Gra Logiczna (5 Monet) +30 Zad, -15 En</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          <TouchableOpacity
+            style={{ backgroundColor: '#d32f2f', padding: 10, borderRadius: 5, marginTop: 5 }}
+            onPress={() => setActiveActionSheet(null)}
+          >
+            <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>Zamknij</Text>
           </TouchableOpacity>
         </View>
       )}

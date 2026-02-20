@@ -20,5 +20,8 @@
     "react-native-web": "^0.21.0",
     "three": "^0.166.1"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
 }
