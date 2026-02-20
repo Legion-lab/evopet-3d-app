@@ -383,6 +383,7 @@ export default function App() {
         message: userText
       };
 
+      // T-28: AI Logic Verified
       callPetAI(userText, contextData).then((response) => {
         setMessages((prev) => [...prev, {
           sender: 'pet',
@@ -521,8 +522,11 @@ export default function App() {
       onPanResponderRelease: (evt, gestureState) => {
         const { dx, dy } = gestureState;
 
-        // Detect Upward Swipe (Throw)
-        if (dy < -50 && equippedFoodRef.current) {
+        // T-28: Debug Log for Swipe
+        console.log('GEST SWIPE:', dy);
+
+        // Detect Upward Swipe (Throw) - lowered threshold to -20
+        if (dy < -20 && equippedFoodRef.current) {
            const item = equippedFoodRef.current;
 
            // Decrease inventory
@@ -685,8 +689,8 @@ export default function App() {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <View style={{ flex: 1 }} {...panResponder.panHandlers}>
+    <View style={{ flex: 1 }} {...panResponder.panHandlers}>
+      <View style={{ flex: 1 }}>
         <GLView
           style={{ flex: 1 }}
           onContextCreate={onContextCreate}
