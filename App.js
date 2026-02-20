@@ -7,11 +7,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function App() {
   const sphereRef = useRef(null);
+  const ambientLightRef = useRef(null);
+  const directionalLightRef = useRef(null);
   const scrollViewRef = useRef(null);
   const [hunger, setHunger] = useState(80);
   const [energy, setEnergy] = useState(80);
   const [hygiene, setHygiene] = useState(80);
   const [happiness, setHappiness] = useState(80);
+  const [coins, setCoins] = useState(50);
+  const [isSleeping, setIsSleeping] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
   const gameOverRef = useRef(false);
@@ -40,17 +44,26 @@ export default function App() {
         const jsonValue = stores['@pet_stats'];
         if (jsonValue != null) {
           const data = JSON.parse(jsonValue);
-          let { hunger, energy, hygiene, happiness, lastSavedTime } = data;
+          let { hunger, energy, hygiene, happiness, coins, isSleeping, lastSavedTime } = data;
 
           if (lastSavedTime) {
             const now = Date.now();
             const elapsedSeconds = Math.floor((now - lastSavedTime) / 1000);
 
             if (elapsedSeconds > 0) {
-              hunger = Math.max(hunger - elapsedSeconds, 0);
-              energy = Math.max(energy - elapsedSeconds, 0);
-              hygiene = Math.max(hygiene - elapsedSeconds, 0);
-              happiness = Math.max(happiness - elapsedSeconds, 0);
+              if (isSleeping) {
+                // Sleep Logic: Energy increases, others decrease slower
+                energy = Math.min(energy + elapsedSeconds * 2, 100);
+                hunger = Math.max(hunger - elapsedSeconds * 0.5, 0);
+                hygiene = Math.max(hygiene - elapsedSeconds * 0.5, 0);
+                happiness = Math.max(happiness - elapsedSeconds * 0.5, 0);
+              } else {
+                // Awake Logic: Standard decay
+                hunger = Math.max(hunger - elapsedSeconds, 0);
+                energy = Math.max(energy - elapsedSeconds, 0);
+                hygiene = Math.max(hygiene - elapsedSeconds, 0);
+                happiness = Math.max(happiness - elapsedSeconds, 0);
+              }
             }
           }
 
@@ -58,6 +71,8 @@ export default function App() {
           setEnergy(energy);
           setHygiene(hygiene);
           setHappiness(happiness);
+          if (coins !== undefined) setCoins(coins);
+          if (isSleeping !== undefined) setIsSleeping(isSleeping);
         }
 
         if (stores['@pet_name']) setPetName(stores['@pet_name']);
@@ -86,7 +101,7 @@ export default function App() {
     if (isLoaded) {
       const saveState = async () => {
         try {
-          const data = { hunger, energy, hygiene, happiness, lastSavedTime: Date.now() };
+          const data = { hunger, energy, hygiene, happiness, coins, isSleeping, lastSavedTime: Date.now() };
           await AsyncStorage.setItem('@pet_stats', JSON.stringify(data));
         } catch (e) {
           console.error("Failed to save state", e);
@@ -94,7 +109,7 @@ export default function App() {
       };
       saveState();
     }
-  }, [hunger, energy, hygiene, happiness, isLoaded]);
+  }, [hunger, energy, hygiene, happiness, coins, isSleeping, isLoaded]);
 
   // Save onboarding/profile state separately
   useEffect(() => {
@@ -110,21 +125,30 @@ export default function App() {
     const interval = setInterval(() => {
       if (gameOverRef.current) return;
 
-      setHunger((prev) => {
-        const newValue = prev - 1;
-        if (newValue <= 0) {
-          setIsGameOver(true);
-          return 0;
-        }
-        return newValue;
-      });
-      setEnergy((prev) => Math.max(prev - 1, 0));
-      setHygiene((prev) => Math.max(prev - 1, 0));
-      setHappiness((prev) => Math.max(prev - 1, 0));
+      if (isSleeping) {
+        // Sleep Mode: Energy +2, others -0.5
+        setEnergy((prev) => Math.min(prev + 2, 100));
+        setHunger((prev) => Math.max(prev - 0.5, 0));
+        setHygiene((prev) => Math.max(prev - 0.5, 0));
+        setHappiness((prev) => Math.max(prev - 0.5, 0));
+      } else {
+        // Awake Mode: Normal decay
+        setHunger((prev) => {
+          const newValue = prev - 1;
+          if (newValue <= 0) {
+            setIsGameOver(true);
+            return 0;
+          }
+          return newValue;
+        });
+        setEnergy((prev) => Math.max(prev - 1, 0));
+        setHygiene((prev) => Math.max(prev - 1, 0));
+        setHappiness((prev) => Math.max(prev - 1, 0));
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isSleeping]);
 
   useEffect(() => {
     if (sphereRef.current) {
@@ -143,6 +167,19 @@ export default function App() {
       }
     }
   }, [hunger, happiness, isGameOver]);
+
+  // Sleep Effect (Lighting)
+  useEffect(() => {
+    if (ambientLightRef.current && directionalLightRef.current) {
+      if (isSleeping) {
+        ambientLightRef.current.intensity = 0.1;
+        directionalLightRef.current.intensity = 0.1;
+      } else {
+        ambientLightRef.current.intensity = 0.5;
+        directionalLightRef.current.intensity = 1.0;
+      }
+    }
+  }, [isSleeping]);
 
   // Onboarding: Initial Message
   useEffect(() => {
@@ -243,11 +280,13 @@ export default function App() {
     // Ambient Light (soft base lighting)
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
+    ambientLightRef.current = ambientLight;
 
     // Directional Light (strong directional source for shadows/shading)
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
     directionalLight.position.set(5, 5, 5);
     scene.add(directionalLight);
+    directionalLightRef.current = directionalLight;
 
     // Point Light (local light source for highlights/depth)
     const pointLight = new THREE.PointLight(0xffffff, 1.0);
@@ -296,6 +335,31 @@ export default function App() {
           onContextCreate={onContextCreate}
         />
       </View>
+
+      {/* Coins Display (Top Left) */}
+      <View style={{ position: 'absolute', top: 40, left: 20, zIndex: 10 }}>
+        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#FFD700' }}>🪙 {coins}</Text>
+      </View>
+
+      {/* Sleep Toggle Button (Top Right) */}
+      {!isGameOver && (
+        <TouchableOpacity
+          onPress={() => setIsSleeping(!isSleeping)}
+          style={{
+            position: 'absolute',
+            top: 40,
+            right: 20,
+            backgroundColor: isSleeping ? '#FFD700' : '#483D8B',
+            padding: 10,
+            borderRadius: 20,
+            zIndex: 10
+          }}
+        >
+          <Text style={{ color: isSleeping ? 'black' : 'white', fontWeight: 'bold' }}>
+            {isSleeping ? '☀️ Obudź' : '🌙 Uśpij'}
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {/* Right Side Vertical Navigation (TikTok Style) */}
       <View style={{
