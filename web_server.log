@@ -1,13 +1,9 @@
-
-> app@1.0.0 web
-> expo start --web
-
 Starting project at /app
 Starting Metro Bundler
 Waiting on http://localhost:8081
 Logs for your project will appear below.
 Web ./index.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
-Web ./index.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 60.7% (128/174)
+Web ./index.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 61.0% (124/169)
  WARN  The package /app/node_modules/three contains an invalid package.json configuration. Consider raising this issue with the package maintainer(s).
 Reason: The resolution for "/app/node_modules/three/examples/jsm/loaders/ColladaLoader" defined in "exports" is /app/node_modules/three/examples/jsm/loaders/ColladaLoader, however this file does not exist. Falling back to file-based resolution.
  WARN  The package /app/node_modules/three contains an invalid package.json configuration. Consider raising this issue with the package maintainer(s).
@@ -22,7 +18,14 @@ Reason: The resolution for "/app/node_modules/three/examples/jsm/loaders/Collada
 Reason: The resolution for "/app/node_modules/three/examples/jsm/loaders/MTLLoader" defined in "exports" is /app/node_modules/three/examples/jsm/loaders/MTLLoader, however this file does not exist. Falling back to file-based resolution.
  WARN  The package /app/node_modules/three contains an invalid package.json configuration. Consider raising this issue with the package maintainer(s).
 Reason: The resolution for "/app/node_modules/three/examples/jsm/loaders/OBJLoader" defined in "exports" is /app/node_modules/three/examples/jsm/loaders/OBJLoader, however this file does not exist. Falling back to file-based resolution.
-Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 85.4% (207/224)
-Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.2% (262/263)
-Web Bundled 12036ms index.js (263 modules)
+Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 92.6% (257/267)
+Web ./index.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 9890ms index.js (269 modules)
+Web Bundled 3080ms index.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web ./index.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 212ms index.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web ./index.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 28ms index.js (1 module)
  LOG  [web] Logs will appear in the browser console

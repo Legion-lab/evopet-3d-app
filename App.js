@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
 import { GLView } from 'expo-gl';
 import { Renderer } from 'expo-three';
 import * as THREE from 'three';
@@ -14,6 +14,18 @@ export default function App() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
   const gameOverRef = useRef(false);
+
+  const [showHUD, setShowHUD] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const lastTap = useRef(0);
+
+  const handleDoubleTap = () => {
+    const now = Date.now();
+    if (now - lastTap.current < 300) {
+      setShowHUD((prev) => !prev);
+    }
+    lastTap.current = now;
+  };
 
   useEffect(() => {
     gameOverRef.current = isGameOver;
@@ -200,10 +212,41 @@ export default function App() {
 
   return (
     <View style={{ flex: 1 }}>
-      <GLView
-        style={{ flex: 1 }}
-        onContextCreate={onContextCreate}
-      />
+      <TouchableWithoutFeedback onPress={handleDoubleTap}>
+        <View style={{ flex: 1 }}>
+          <GLView
+            style={{ flex: 1 }}
+            onContextCreate={onContextCreate}
+          />
+        </View>
+      </TouchableWithoutFeedback>
+
+      {/* Menu Button - Always Visible */}
+      <TouchableOpacity
+         onPress={() => setIsMenuOpen(true)}
+         style={{ position: 'absolute', top: 40, right: 20, zIndex: 10, padding: 10, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 5 }}>
+         <Text style={{ color: 'white', fontWeight: 'bold' }}>☰ Menu</Text>
+      </TouchableOpacity>
+
+      {/* Menu Overlay */}
+      {isMenuOpen && (
+         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 20, justifyContent: 'center', alignItems: 'center' }}>
+            <View style={{ width: '80%', backgroundColor: '#333', borderRadius: 20, padding: 20, alignItems: 'center' }}>
+               <Text style={{ color: 'white', fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>Menu Główne</Text>
+               <TouchableOpacity style={{ padding: 10, marginBottom: 10, backgroundColor: '#555', borderRadius: 5, width: '100%', alignItems: 'center' }}>
+                  <Text style={{ color: 'white' }}>Ustawienia</Text>
+               </TouchableOpacity>
+               <TouchableOpacity style={{ padding: 10, marginBottom: 10, backgroundColor: '#555', borderRadius: 5, width: '100%', alignItems: 'center' }}>
+                  <Text style={{ color: 'white' }}>Sklep</Text>
+               </TouchableOpacity>
+               <TouchableOpacity onPress={() => setIsMenuOpen(false)} style={{ padding: 10, marginTop: 10, backgroundColor: '#d32f2f', borderRadius: 5, width: '100%', alignItems: 'center' }}>
+                  <Text style={{ color: 'white', fontWeight: 'bold' }}>Zamknij</Text>
+               </TouchableOpacity>
+            </View>
+         </View>
+      )}
+
+      {showHUD && (
       <View style={{ position: 'absolute', top: 50, left: 20, right: 20, zIndex: 1 }}>
         {/* Hunger */}
         <Text style={{ color: 'white', marginBottom: 5 }}>Głód</Text>
@@ -229,9 +272,10 @@ export default function App() {
           <View style={{ width: `${happiness}%`, height: '100%', backgroundColor: 'green', borderRadius: 10 }} />
         </View>
       </View>
+      )}
 
       {/* Action Buttons */}
-      {!isGameOver && (
+      {showHUD && !isGameOver && (
         <View style={{ position: 'absolute', bottom: 30, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-evenly', zIndex: 1 }}>
           <TouchableOpacity
             onPress={() => setHunger(prev => Math.min(prev + 20, 100))}
