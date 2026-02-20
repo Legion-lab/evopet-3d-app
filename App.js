@@ -567,79 +567,127 @@ export default function App() {
                    </View>
                  </KeyboardAvoidingView>
                ) : activeModal === 'Sklep' ? (
-                 <View style={{ width: '100%', alignItems: 'center' }}>
-                   <TouchableOpacity
-                     style={{ backgroundColor: coins >= 5 ? '#4CAF50' : '#555', padding: 15, borderRadius: 10, marginBottom: 10, width: '100%' }}
-                     disabled={coins < 5}
-                     onPress={() => {
-                       if (coins >= 5) {
-                         setCoins(prev => prev - 5);
-                         setInventory(prev => ({ ...prev, snack: prev.snack + 1 }));
-                       }
-                     }}
-                   >
-                     <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>Przekąska (5 Monet)</Text>
-                   </TouchableOpacity>
+                 <View style={{ height: 220 }}>
+                   <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ padding: 10, gap: 15 }}>
+                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
+                       <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Przekąska</Text>
+                       <Text style={{ fontSize: 50 }}>🍎</Text>
+                       <TouchableOpacity
+                         style={{ backgroundColor: coins >= 5 ? '#4CAF50' : '#555', padding: 8, borderRadius: 5, width: '100%', alignItems: 'center' }}
+                         disabled={coins < 5}
+                         onPress={() => {
+                           if (coins >= 5) {
+                             setCoins(prev => prev - 5);
+                             setInventory(prev => ({ ...prev, snack: prev.snack + 1 }));
+                           }
+                         }}
+                       >
+                         <Text style={{ color: 'white', fontWeight: 'bold' }}>🪙 5</Text>
+                       </TouchableOpacity>
+                     </View>
 
-                   <TouchableOpacity
-                     style={{ backgroundColor: coins >= 10 ? '#FF9800' : '#555', padding: 15, borderRadius: 10, marginBottom: 10, width: '100%' }}
-                     disabled={coins < 10}
-                     onPress={() => {
-                       if (coins >= 10) {
-                         setCoins(prev => prev - 10);
-                         setInventory(prev => ({ ...prev, dinner: prev.dinner + 1 }));
-                       }
-                     }}
-                   >
-                     <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>Pełny Obiad (10 Monet)</Text>
-                   </TouchableOpacity>
+                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
+                       <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Pełny Obiad</Text>
+                       <Text style={{ fontSize: 50 }}>🍱</Text>
+                       <TouchableOpacity
+                         style={{ backgroundColor: coins >= 10 ? '#4CAF50' : '#555', padding: 8, borderRadius: 5, width: '100%', alignItems: 'center' }}
+                         disabled={coins < 10}
+                         onPress={() => {
+                           if (coins >= 10) {
+                             setCoins(prev => prev - 10);
+                             setInventory(prev => ({ ...prev, dinner: prev.dinner + 1 }));
+                           }
+                         }}
+                       >
+                         <Text style={{ color: 'white', fontWeight: 'bold' }}>🪙 10</Text>
+                       </TouchableOpacity>
+                     </View>
 
-                   <TouchableOpacity
-                     style={{ backgroundColor: coins >= 15 ? '#795548' : '#555', padding: 15, borderRadius: 10, marginBottom: 10, width: '100%' }}
-                     disabled={coins < 15}
-                     onPress={() => {
-                       if (coins >= 15) {
-                         setCoins(prev => prev - 15);
-                         setInventory(prev => ({ ...prev, coffee: prev.coffee + 1 }));
-                       }
-                     }}
-                   >
-                     <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>Kawa (15 Monet)</Text>
-                   </TouchableOpacity>
+                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
+                       <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Kawa</Text>
+                       <Text style={{ fontSize: 50 }}>☕</Text>
+                       <TouchableOpacity
+                         style={{ backgroundColor: coins >= 15 ? '#4CAF50' : '#555', padding: 8, borderRadius: 5, width: '100%', alignItems: 'center' }}
+                         disabled={coins < 15}
+                         onPress={() => {
+                           if (coins >= 15) {
+                             setCoins(prev => prev - 15);
+                             setInventory(prev => ({ ...prev, coffee: prev.coffee + 1 }));
+                           }
+                         }}
+                       >
+                         <Text style={{ color: 'white', fontWeight: 'bold' }}>🪙 15</Text>
+                       </TouchableOpacity>
+                     </View>
 
-                   <TouchableOpacity
-                     style={{ backgroundColor: coins >= 50 ? '#9C27B0' : '#555', padding: 15, borderRadius: 10, marginBottom: 10, width: '100%' }}
-                     disabled={coins < 50}
-                     onPress={() => {
-                       if (coins >= 50) {
-                         setCoins(prev => prev - 50);
-                         setInventory(prev => ({ ...prev, hungerBuster: prev.hungerBuster + 1 }));
-                       }
-                     }}
-                   >
-                     <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>Magiczny Buster Głodu (50 Monet)</Text>
-                   </TouchableOpacity>
+                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
+                       <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Buster Głodu</Text>
+                       <Text style={{ fontSize: 50 }}>🛡️</Text>
+                       <TouchableOpacity
+                         style={{ backgroundColor: coins >= 50 ? '#4CAF50' : '#555', padding: 8, borderRadius: 5, width: '100%', alignItems: 'center' }}
+                         disabled={coins < 50}
+                         onPress={() => {
+                           if (coins >= 50) {
+                             setCoins(prev => prev - 50);
+                             setInventory(prev => ({ ...prev, hungerBuster: prev.hungerBuster + 1 }));
+                           }
+                         }}
+                       >
+                         <Text style={{ color: 'white', fontWeight: 'bold' }}>🪙 50</Text>
+                       </TouchableOpacity>
+                     </View>
 
-                   <TouchableOpacity
-                     style={{ backgroundColor: coins >= 50 ? '#9C27B0' : '#555', padding: 15, borderRadius: 10, marginBottom: 10, width: '100%' }}
-                     disabled={coins < 50}
-                     onPress={() => {
-                       if (coins >= 50) {
-                         setCoins(prev => prev - 50);
-                         setInventory(prev => ({ ...prev, energyBuster: prev.energyBuster + 1 }));
-                       }
-                     }}
-                   >
-                     <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>Magiczny Buster Energii (50 Monet)</Text>
-                   </TouchableOpacity>
+                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
+                       <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Buster Energii</Text>
+                       <Text style={{ fontSize: 50 }}>⚡</Text>
+                       <TouchableOpacity
+                         style={{ backgroundColor: coins >= 50 ? '#4CAF50' : '#555', padding: 8, borderRadius: 5, width: '100%', alignItems: 'center' }}
+                         disabled={coins < 50}
+                         onPress={() => {
+                           if (coins >= 50) {
+                             setCoins(prev => prev - 50);
+                             setInventory(prev => ({ ...prev, energyBuster: prev.energyBuster + 1 }));
+                           }
+                         }}
+                       >
+                         <Text style={{ color: 'white', fontWeight: 'bold' }}>🪙 50</Text>
+                       </TouchableOpacity>
+                     </View>
+                   </ScrollView>
                  </View>
                ) : activeModal === 'Plecak' ? (
-                 <View style={{ width: '100%', alignItems: 'center' }}>
-                    <Text style={{ color: 'white', fontSize: 18, marginBottom: 10 }}>Przekąski: {inventory.snack}</Text>
-                    <Text style={{ color: 'white', fontSize: 18, marginBottom: 10 }}>Obiady: {inventory.dinner}</Text>
-                    <Text style={{ color: 'white', fontSize: 18, marginBottom: 10 }}>Kawy: {inventory.coffee}</Text>
-                    <Text style={{ color: 'white', fontSize: 18, marginBottom: 10 }}>Buster Głodu: {inventory.hungerBuster}</Text>
-                    <Text style={{ color: 'white', fontSize: 18, marginBottom: 10 }}>Buster Energii: {inventory.energyBuster}</Text>
+                 <View style={{ height: 220 }}>
+                   <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ padding: 10, gap: 15 }}>
+                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
+                       <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Przekąska</Text>
+                       <Text style={{ fontSize: 50 }}>🍎</Text>
+                       <Text style={{ color: '#aaa', fontWeight: 'bold' }}>Posiadasz: {inventory.snack}</Text>
+                     </View>
+
+                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
+                       <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Obiad</Text>
+                       <Text style={{ fontSize: 50 }}>🍱</Text>
+                       <Text style={{ color: '#aaa', fontWeight: 'bold' }}>Posiadasz: {inventory.dinner}</Text>
+                     </View>
+
+                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
+                       <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Kawa</Text>
+                       <Text style={{ fontSize: 50 }}>☕</Text>
+                       <Text style={{ color: '#aaa', fontWeight: 'bold' }}>Posiadasz: {inventory.coffee}</Text>
+                     </View>
+
+                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
+                       <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Buster Głodu</Text>
+                       <Text style={{ fontSize: 50 }}>🛡️</Text>
+                       <Text style={{ color: '#aaa', fontWeight: 'bold' }}>Posiadasz: {inventory.hungerBuster}</Text>
+                     </View>
+
+                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
+                       <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Buster Energii</Text>
+                       <Text style={{ fontSize: 50 }}>⚡</Text>
+                       <Text style={{ color: '#aaa', fontWeight: 'bold' }}>Posiadasz: {inventory.energyBuster}</Text>
+                     </View>
+                   </ScrollView>
                  </View>
                ) : (
                  <View style={{ height: 100, justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
