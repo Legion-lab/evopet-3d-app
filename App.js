@@ -34,10 +34,46 @@ export default function App() {
   const [happiness, setHappiness] = useState(80);
   const [coins, setCoins] = useState(50);
   const [inventory, setInventory] = useState({ snack: 0, dinner: 0, coffee: 0, hungerBuster: 0, energyBuster: 0 });
+  const [equippedFood, setEquippedFood] = useState(null);
+  const equippedFoodRef = useRef(null);
 
   useEffect(() => {
     inventoryRef.current = inventory;
   }, [inventory]);
+
+  useEffect(() => {
+    equippedFoodRef.current = equippedFood;
+  }, [equippedFood]);
+
+  useEffect(() => {
+    if (!sceneRef.current) return;
+
+    if (equippedFood) {
+      // Remove existing holding mesh if any (and not flying)
+      if (foodMeshRef.current && !isFoodFlyingRef.current) {
+         sceneRef.current.remove(foodMeshRef.current);
+      }
+
+      // Create new mesh
+      const geometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+      const material = new THREE.MeshStandardMaterial({ color: 0xFFA500 });
+      const mesh = new THREE.Mesh(geometry, material);
+
+      // Position fixed relative to camera view
+      mesh.position.set(0, -1.5, -3);
+
+      sceneRef.current.add(mesh);
+      foodMeshRef.current = mesh;
+      isFoodFlyingRef.current = false;
+    } else {
+      // Unequipped
+      // Only remove if it's NOT flying (i.e. cancelled equip)
+      if (foodMeshRef.current && !isFoodFlyingRef.current) {
+        sceneRef.current.remove(foodMeshRef.current);
+        foodMeshRef.current = null;
+      }
+    }
+  }, [equippedFood]);
 
   const [hungerBuffUntil, setHungerBuffUntil] = useState(0);
   const [energyBuffUntil, setEnergyBuffUntil] = useState(0);
@@ -425,37 +461,6 @@ export default function App() {
     }
   }, [roomHygiene]);
 
-  const throwFood = (itemType) => {
-    if (!sceneRef.current) return;
-
-    // Cleanup existing food if any
-    if (foodMeshRef.current) {
-      sceneRef.current.remove(foodMeshRef.current);
-      foodMeshRef.current = null;
-      isFoodFlyingRef.current = false;
-    }
-
-    // Create Food Mesh (Orange Box)
-    const geometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
-    const material = new THREE.MeshStandardMaterial({ color: 0xFFA500 });
-    const mesh = new THREE.Mesh(geometry, material);
-
-    // Initial Position (Bottom center, slightly forward)
-    mesh.position.set(0, -3, 2);
-
-    // Add to Scene
-    sceneRef.current.add(mesh);
-    foodMeshRef.current = mesh;
-
-    // Set Velocity (Up and forward towards 0,0,0)
-    // Target is approx 0,0,0. Start is 0,-3,2.
-    // Needs +y and -z.
-    foodVelocityRef.current.set(0, 0.25, -0.2);
-
-    isFoodFlyingRef.current = true;
-    thrownItemRef.current = itemType;
-  };
-
   const handleTouch = (event) => {
     const { pageX, pageY } = event.nativeEvent;
 
@@ -464,7 +469,8 @@ export default function App() {
 
     // Convert to NDC (Normalized Device Coordinates)
     mouseRef.current.x = (pageX / width) * 2 - 1;
-    mouseRef.current.y = -(pageY / height) * 2 - 0.1;
+    const rawY = -(pageY / height) * 2 + 1;
+    mouseRef.current.y = Math.max(-1, Math.min(1, rawY));
 
     console.log('Kamera 3D:', mouseRef.current.x, mouseRef.current.y);
 
@@ -489,15 +495,19 @@ export default function App() {
         const { dx, dy } = gestureState;
 
         // Detect Upward Swipe (Throw)
-        if (dy < -50) {
-           // Check Inventory using ref to avoid stale closure
-           const currentInv = inventoryRef.current || { snack: 0, dinner: 0 };
+        if (dy < -50 && equippedFoodRef.current) {
+           const item = equippedFoodRef.current;
 
-           if (currentInv.snack > 0) {
-              throwFood('snack');
-           } else if (currentInv.dinner > 0) {
-              throwFood('dinner');
-           }
+           // Decrease inventory
+           setInventory(prev => ({ ...prev, [item]: Math.max(0, prev[item] - 1) }));
+
+           // Activate Physics
+           isFoodFlyingRef.current = true;
+           foodVelocityRef.current.set(0, 0.15, -0.3);
+           thrownItemRef.current = item;
+
+           // Unequip
+           setEquippedFood(null);
         }
         // Detect Tap (Click)
         else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
@@ -1074,8 +1084,7 @@ export default function App() {
                   disabled={inventory.snack <= 0}
                   onPress={() => {
                     if (inventory.snack > 0) {
-                      setInventory(prev => ({ ...prev, snack: prev.snack - 1 }));
-                      setHunger(prev => Math.min(prev + 20, 100));
+                      setEquippedFood('snack');
                       setActiveActionSheet(null);
                     }
                   }}
@@ -1093,8 +1102,7 @@ export default function App() {
                   disabled={inventory.dinner <= 0}
                   onPress={() => {
                     if (inventory.dinner > 0) {
-                      setInventory(prev => ({ ...prev, dinner: prev.dinner - 1 }));
-                      setHunger(prev => Math.min(prev + 50, 100));
+                      setEquippedFood('dinner');
                       setActiveActionSheet(null);
                     }
                   }}
