@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView } from 'react-native';
 import { GLView } from 'expo-gl';
 import { Renderer } from 'expo-three';
 import * as THREE from 'three';
@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function App() {
   const sphereRef = useRef(null);
+  const scrollViewRef = useRef(null);
   const [hunger, setHunger] = useState(80);
   const [energy, setEnergy] = useState(80);
   const [hygiene, setHygiene] = useState(80);
@@ -18,6 +19,13 @@ export default function App() {
   const [showHUD, setShowHUD] = useState(false);
   const [activeModal, setActiveModal] = useState(null);
 
+  const [messages, setMessages] = useState([]);
+  const [inputText, setInputText] = useState('');
+  const [petName, setPetName] = useState('Bobas');
+  const [userName, setUserName] = useState('Gracz');
+  const [isFirstLaunch, setIsFirstLaunch] = useState(true);
+  const [onboardingStep, setOnboardingStep] = useState(0);
+
   useEffect(() => {
     gameOverRef.current = isGameOver;
   }, [isGameOver]);
@@ -25,7 +33,11 @@ export default function App() {
   useEffect(() => {
     const loadState = async () => {
       try {
-        const jsonValue = await AsyncStorage.getItem('@pet_stats');
+        const keys = ['@pet_stats', '@pet_name', '@user_name', '@is_first_launch', '@onboarding_step'];
+        const result = await AsyncStorage.multiGet(keys);
+        const stores = Object.fromEntries(result);
+
+        const jsonValue = stores['@pet_stats'];
         if (jsonValue != null) {
           const data = JSON.parse(jsonValue);
           let { hunger, energy, hygiene, happiness, lastSavedTime } = data;
@@ -47,6 +59,20 @@ export default function App() {
           setHygiene(hygiene);
           setHappiness(happiness);
         }
+
+        if (stores['@pet_name']) setPetName(stores['@pet_name']);
+        if (stores['@user_name']) setUserName(stores['@user_name']);
+
+        if (stores['@is_first_launch']) {
+           setIsFirstLaunch(JSON.parse(stores['@is_first_launch']));
+        } else {
+           setIsFirstLaunch(true);
+        }
+
+        if (stores['@onboarding_step']) {
+           setOnboardingStep(parseInt(stores['@onboarding_step'], 10));
+        }
+
       } catch (e) {
         console.error("Failed to load state", e);
       } finally {
@@ -69,6 +95,16 @@ export default function App() {
       saveState();
     }
   }, [hunger, energy, hygiene, happiness, isLoaded]);
+
+  // Save onboarding/profile state separately
+  useEffect(() => {
+    if (isLoaded) {
+       AsyncStorage.setItem('@pet_name', petName);
+       AsyncStorage.setItem('@user_name', userName);
+       AsyncStorage.setItem('@is_first_launch', JSON.stringify(isFirstLaunch));
+       AsyncStorage.setItem('@onboarding_step', onboardingStep.toString());
+    }
+  }, [petName, userName, isFirstLaunch, onboardingStep, isLoaded]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -107,6 +143,57 @@ export default function App() {
       }
     }
   }, [hunger, happiness, isGameOver]);
+
+  // Onboarding: Initial Message
+  useEffect(() => {
+    if (isFirstLaunch && messages.length === 0) {
+      const initialMsg = {
+        sender: 'pet',
+        text: 'Cześć! Jestem Twoim nowym wirtualnym przyjacielem. Jak chcesz mnie nazwać?'
+      };
+      setMessages([initialMsg]);
+    }
+  }, [isFirstLaunch, messages.length]);
+
+  const handleSendMessage = () => {
+    if (!inputText.trim()) return;
+
+    const newMsg = { sender: 'user', text: inputText.trim() };
+    setMessages((prev) => [...prev, newMsg]);
+
+    const userText = inputText.trim();
+    setInputText('');
+
+    // Onboarding Logic
+    if (onboardingStep === 0) {
+      setPetName(userText);
+      setOnboardingStep(1);
+      setTimeout(() => {
+        setMessages((prev) => [...prev, {
+          sender: 'pet',
+          text: 'Super imię! A jak Ty masz na imię, żebym wiedział jak się do Ciebie zwracać?'
+        }]);
+      }, 1000);
+    } else if (onboardingStep === 1) {
+      setUserName(userText);
+      setOnboardingStep(2);
+      setIsFirstLaunch(false); // Triggers save via useEffect
+      setTimeout(() => {
+        setMessages((prev) => [...prev, {
+          sender: 'pet',
+          text: `Miło Cię poznać, ${userText}! Będę najlepszym zwierzakiem o imieniu ${petName}!`
+        }]);
+      }, 1000);
+    } else {
+      // Standard Chat
+      setTimeout(() => {
+        setMessages((prev) => [...prev, {
+          sender: 'pet',
+          text: `Hau hau, ${userName}!`
+        }]);
+      }, 1000);
+    }
+  };
 
   const resetGame = async () => {
     setHunger(80);
@@ -228,12 +315,43 @@ export default function App() {
         </TouchableOpacity>
 
         {/* Chat Button */}
-        <TouchableOpacity
-          onPress={() => setActiveModal('Czat')}
-          style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}
-        >
-          <Text style={{ fontSize: 24 }}>💬</Text>
-        </TouchableOpacity>
+        <View style={{ alignItems: 'center' }}>
+          {(isFirstLaunch && !showHUD && activeModal === null) && (
+            <View style={{
+              position: 'absolute',
+              right: 60,
+              top: 10,
+              backgroundColor: '#fff',
+              padding: 8,
+              borderRadius: 10,
+              width: 150,
+              zIndex: 10
+            }}>
+              <Text style={{ color: '#000', fontSize: 12, fontWeight: 'bold' }}>👋 Kliknij tutaj, by porozmawiać!</Text>
+              <View style={{
+                position: 'absolute',
+                right: -6,
+                top: 12,
+                width: 0,
+                height: 0,
+                borderTopWidth: 6,
+                borderBottomWidth: 6,
+                borderLeftWidth: 6,
+                borderStyle: 'solid',
+                backgroundColor: 'transparent',
+                borderTopColor: 'transparent',
+                borderBottomColor: 'transparent',
+                borderLeftColor: '#fff'
+              }} />
+            </View>
+          )}
+          <TouchableOpacity
+            onPress={() => setActiveModal('Czat')}
+            style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}
+          >
+            <Text style={{ fontSize: 24 }}>💬</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Shop Button */}
         <TouchableOpacity
@@ -265,9 +383,46 @@ export default function App() {
          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 20, justifyContent: 'center', alignItems: 'center' }}>
             <View style={{ width: '80%', backgroundColor: '#333', borderRadius: 20, padding: 20, alignItems: 'center' }}>
                <Text style={{ color: 'white', fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>Witaj w: {activeModal}</Text>
-               <View style={{ height: 100, justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
-                 <Text style={{ color: '#aaa' }}>Treść dla {activeModal} pojawi się wkrótce...</Text>
-               </View>
+
+               {activeModal === 'Czat' ? (
+                 <KeyboardAvoidingView behavior="padding" style={{ width: '100%', height: 300 }}>
+                   <ScrollView
+                     style={{ flex: 1, marginBottom: 10 }}
+                     ref={scrollViewRef}
+                     onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+                   >
+                     {messages.map((msg, index) => (
+                       <View key={index} style={{
+                         alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+                         backgroundColor: msg.sender === 'user' ? '#007AFF' : '#555',
+                         padding: 10,
+                         borderRadius: 10,
+                         marginVertical: 5,
+                         maxWidth: '80%'
+                       }}>
+                         <Text style={{ color: 'white' }}>{msg.text}</Text>
+                       </View>
+                     ))}
+                   </ScrollView>
+                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                     <TextInput
+                       style={{ flex: 1, backgroundColor: '#444', color: 'white', padding: 10, borderRadius: 5, marginRight: 10 }}
+                       value={inputText}
+                       onChangeText={setInputText}
+                       placeholder="Napisz coś..."
+                       placeholderTextColor="#aaa"
+                     />
+                     <TouchableOpacity onPress={handleSendMessage} style={{ backgroundColor: '#2196F3', padding: 10, borderRadius: 5 }}>
+                       <Text style={{ color: 'white', fontWeight: 'bold' }}>Wyślij</Text>
+                     </TouchableOpacity>
+                   </View>
+                 </KeyboardAvoidingView>
+               ) : (
+                 <View style={{ height: 100, justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
+                   <Text style={{ color: '#aaa' }}>Treść dla {activeModal} pojawi się wkrótce...</Text>
+                 </View>
+               )}
+
                <TouchableOpacity onPress={() => setActiveModal(null)} style={{ padding: 10, marginTop: 10, backgroundColor: '#d32f2f', borderRadius: 5, width: '100%', alignItems: 'center' }}>
                   <Text style={{ color: 'white', fontWeight: 'bold' }}>Zamknij</Text>
                </TouchableOpacity>
