@@ -19,10 +19,24 @@ export default function App() {
         const jsonValue = await AsyncStorage.getItem('@pet_stats');
         if (jsonValue != null) {
           const data = JSON.parse(jsonValue);
-          setHunger(data.hunger);
-          setEnergy(data.energy);
-          setHygiene(data.hygiene);
-          setHappiness(data.happiness);
+          let { hunger, energy, hygiene, happiness, lastSavedTime } = data;
+
+          if (lastSavedTime) {
+            const now = Date.now();
+            const elapsedSeconds = Math.floor((now - lastSavedTime) / 1000);
+
+            if (elapsedSeconds > 0) {
+              hunger = Math.max(hunger - elapsedSeconds, 0);
+              energy = Math.max(energy - elapsedSeconds, 0);
+              hygiene = Math.max(hygiene - elapsedSeconds, 0);
+              happiness = Math.max(happiness - elapsedSeconds, 0);
+            }
+          }
+
+          setHunger(hunger);
+          setEnergy(energy);
+          setHygiene(hygiene);
+          setHappiness(happiness);
         }
       } catch (e) {
         console.error("Failed to load state", e);
@@ -37,7 +51,7 @@ export default function App() {
     if (isLoaded) {
       const saveState = async () => {
         try {
-          const data = { hunger, energy, hygiene, happiness };
+          const data = { hunger, energy, hygiene, happiness, lastSavedTime: Date.now() };
           await AsyncStorage.setItem('@pet_stats', JSON.stringify(data));
         } catch (e) {
           console.error("Failed to save state", e);
