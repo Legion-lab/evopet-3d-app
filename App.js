@@ -177,6 +177,7 @@ export default function App() {
   const [activeModal, setActiveModal] = useState(null);
   const [activeActionSheet, setActiveActionSheet] = useState(null);
   const [inspectedItem, setInspectedItem] = useState(null);
+  const [isFeedingMode, setIsFeedingMode] = useState(false);
 
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -614,8 +615,8 @@ export default function App() {
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => activeModal === null && !showHUD,
-      onMoveShouldSetPanResponder: (evt, gestureState) => activeModal === null && !showHUD && Math.abs(gestureState.dy) > 10,
+      onStartShouldSetPanResponder: () => activeModal === null && !showHUD && !isFeedingMode,
+      onMoveShouldSetPanResponder: (evt, gestureState) => activeModal === null && !showHUD && !isFeedingMode && Math.abs(gestureState.dy) > 10,
       onPanResponderRelease: (evt, gestureState) => {
         const { dx, dy } = gestureState;
 
@@ -799,11 +800,14 @@ export default function App() {
       </View>
 
       {/* Coins Display (Top Left) */}
-      <View style={{ position: 'absolute', top: 40, left: 20, zIndex: 10 }}>
-        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#FFD700' }}>🪙 {coins}</Text>
-      </View>
+      {!isFeedingMode && (
+        <View style={{ position: 'absolute', top: 40, left: 20, zIndex: 10 }}>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#FFD700' }}>🪙 {coins}</Text>
+        </View>
+      )}
 
       {/* Right Side Vertical Navigation (No Stats Button) */}
+      {!isFeedingMode && (
       <View style={{
         position: 'absolute',
         right: 15,
@@ -875,6 +879,7 @@ export default function App() {
           <Text style={{ fontSize: 24 }}>⚙️</Text>
         </TouchableOpacity>
       </View>
+      )}
 
       {/* Universal Modal */}
       {activeModal !== null && (
@@ -1408,9 +1413,98 @@ export default function App() {
       )}
 
       {/* Central Button */}
-      <TouchableOpacity onPress={() => setActiveModal('Profil')} style={styles.centralButton}>
-        <Text style={{ fontSize: 30 }}>🐾</Text>
-      </TouchableOpacity>
+      {!isFeedingMode && (
+        <TouchableOpacity onPress={() => setActiveModal('Profil')} style={styles.centralButton}>
+          <Text style={{ fontSize: 30 }}>🐾</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Cinematic Feeding Trigger Button */}
+      {!isFeedingMode && activeModal === null && (
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            bottom: 110,
+            alignSelf: 'center',
+            backgroundColor: '#FF5252',
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderRadius: 20,
+            elevation: 5,
+            zIndex: 15
+          }}
+          onPress={() => setIsFeedingMode(true)}
+        >
+          <Text style={{color: 'white', fontWeight: 'bold'}}>🍖 NAKARM</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Cinematic Food Carousel */}
+      {isFeedingMode && (
+         <View style={{
+           position: 'absolute',
+           bottom: 0,
+           left: 0,
+           right: 0,
+           height: 160, // Increased height for better tile spacing
+           backgroundColor: 'rgba(0,0,0,0.9)', // Slightly darker for better contrast
+           flexDirection: 'row',
+           alignItems: 'center',
+           zIndex: 20,
+           paddingBottom: 20 // for safe area
+         }}>
+           <TouchableOpacity
+             onPress={() => setIsFeedingMode(false)}
+             style={{
+               width: 40, height: 40, backgroundColor: 'rgba(255,255,255,0.2)',
+               borderRadius: 20, justifyContent: 'center', alignItems: 'center',
+               marginLeft: 15,
+               marginRight: 10
+             }}
+           >
+              <Text style={{fontSize: 18, color: 'white'}}>X</Text>
+           </TouchableOpacity>
+
+           <ScrollView
+             horizontal
+             showsHorizontalScrollIndicator={false}
+             style={{ flex: 1 }}
+             contentContainerStyle={{ paddingHorizontal: 10, alignItems: 'center' }}
+           >
+             {[
+               { id: 'snack', name: 'Przekąska', icon: '🍎' },
+               { id: 'dinner', name: 'Obiad', icon: '🍱' }
+             ].map((item) => (
+               inventory[item.id] > 0 && (
+                 <TouchableOpacity
+                   key={item.id}
+                   style={{
+                     width: 100,
+                     height: 120,
+                     marginHorizontal: 8,
+                     backgroundColor: '#333',
+                     borderRadius: 15,
+                     justifyContent: 'space-between',
+                     alignItems: 'center',
+                     padding: 10,
+                     borderWidth: 1,
+                     borderColor: 'rgba(255,255,255,0.2)',
+                     elevation: 5
+                   }}
+                   onPress={() => {
+                      setEquippedFood(item.id);
+                      setIsFeedingMode(false);
+                   }}
+                 >
+                   <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold', textAlign: 'center' }}>{item.name}</Text>
+                   <Text style={{ fontSize: 40 }}>{item.icon}</Text>
+                   <Text style={{ color: '#aaa', fontSize: 10, fontWeight: 'bold' }}>x{inventory[item.id]}</Text>
+                 </TouchableOpacity>
+               )
+             ))}
+           </ScrollView>
+         </View>
+      )}
 
       {/* Action Sheet */}
       {activeActionSheet !== null && (
