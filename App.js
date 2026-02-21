@@ -57,15 +57,15 @@ const callPetAI = async (userMessage, contextData, key, provider) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          systemInstruction: {
-            parts: [{
-              text: "Jesteś wirtualnym zwierzakiem. Właściciel: " + contextData.userName + ". Statystyki: Głód " + contextData.hunger + "/100, Energia " + contextData.energy + "/100. Odpowiadaj krótko i z humorem. MUSISZ zwrócić TYLKO poprawny JSON: { \"reply\": \"tekst\", \"action\": \"none\" lub \"jump\" }. Użyj 'jump' gdy jesteś radosny."
-            }]
-          },
           contents: [{
             role: 'user',
             parts: [{ text: userMessage }]
           }],
+          systemInstruction: {
+            parts: [{
+              text: "Jesteś wirtualnym zwierzakiem. Właściciel: " + contextData.userName + ". Statystyki: Głód " + contextData.hunger + ", Energia " + contextData.energy + ". Zwróć JSON: { \"reply\": \"tekst\", \"action\": \"none\"|\"jump\" }"
+            }]
+          },
           generationConfig: {
             responseMimeType: "application/json"
           }
@@ -91,7 +91,7 @@ const callPetAI = async (userMessage, contextData, key, provider) => {
     }
 
   } catch (error) {
-    console.error("AI Network Error:", error);
+    console.error('KRYTYCZNY BŁĄD API:', error);
     return { reply: "Nie mogę się połączyć z siecią. Sprawdź internet!", action: "none" };
   }
 };
@@ -598,8 +598,8 @@ export default function App() {
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: () => activeModal === null && !showHUD,
+      onMoveShouldSetPanResponder: (evt, gestureState) => activeModal === null && !showHUD && Math.abs(gestureState.dy) > 10,
       onPanResponderRelease: (evt, gestureState) => {
         const { dx, dy } = gestureState;
 
@@ -1175,48 +1175,44 @@ export default function App() {
       )}
 
       {showHUD && (
-      <View style={styles.hudContainer}>
+      <View style={{
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        borderRadius: 20,
+        padding: 20,
+        width: '90%',
+        alignSelf: 'center',
+        position: 'absolute',
+        bottom: 100
+      }}>
         {/* Hunger */}
-        <View style={styles.statRow}>
-          <View style={styles.statHeader}>
-            <Text style={styles.statLabel}>🍖 Głód</Text>
-            <Text style={styles.statValue}>{Math.round(hunger)}%</Text>
-          </View>
-          <View style={styles.statBarBg}>
-            <View style={{ width: `${hunger}%`, height: '100%', backgroundColor: '#FF5252' }} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+          <Text style={{ fontSize: 20, width: 30 }}>🍖</Text>
+          <View style={{ height: 12, backgroundColor: '#444', borderRadius: 6, flex: 1, marginHorizontal: 10, overflow: 'hidden' }}>
+            <View style={{ height: '100%', width: `${hunger}%`, backgroundColor: '#FF5252', borderRadius: 6 }} />
           </View>
         </View>
 
         {/* Energy */}
-        <View style={styles.statRow}>
-          <View style={styles.statHeader}>
-            <Text style={styles.statLabel}>⚡ Energia</Text>
-            <Text style={styles.statValue}>{Math.round(energy)}%</Text>
-          </View>
-          <View style={styles.statBarBg}>
-            <View style={{ width: `${energy}%`, height: '100%', backgroundColor: '#FFD740' }} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+          <Text style={{ fontSize: 20, width: 30 }}>⚡</Text>
+          <View style={{ height: 12, backgroundColor: '#444', borderRadius: 6, flex: 1, marginHorizontal: 10, overflow: 'hidden' }}>
+            <View style={{ height: '100%', width: `${energy}%`, backgroundColor: '#FFD700', borderRadius: 6 }} />
           </View>
         </View>
 
         {/* Hygiene */}
-        <View style={styles.statRow}>
-          <View style={styles.statHeader}>
-            <Text style={styles.statLabel}>🚿 Higiena</Text>
-            <Text style={styles.statValue}>{Math.round(hygiene)}%</Text>
-          </View>
-          <View style={styles.statBarBg}>
-            <View style={{ width: `${hygiene}%`, height: '100%', backgroundColor: '#448AFF' }} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+          <Text style={{ fontSize: 20, width: 30 }}>🚿</Text>
+          <View style={{ height: 12, backgroundColor: '#444', borderRadius: 6, flex: 1, marginHorizontal: 10, overflow: 'hidden' }}>
+            <View style={{ height: '100%', width: `${hygiene}%`, backgroundColor: '#2196F3', borderRadius: 6 }} />
           </View>
         </View>
 
-        {/* Fun */}
-        <View style={styles.statRow}>
-          <View style={styles.statHeader}>
-            <Text style={styles.statLabel}>⚽ Zadowolenie</Text>
-            <Text style={styles.statValue}>{Math.round(happiness)}%</Text>
-          </View>
-          <View style={styles.statBarBg}>
-            <View style={{ width: `${happiness}%`, height: '100%', backgroundColor: '#69F0AE' }} />
+        {/* Happiness */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+          <Text style={{ fontSize: 20, width: 30 }}>💖</Text>
+          <View style={{ height: 12, backgroundColor: '#444', borderRadius: 6, flex: 1, marginHorizontal: 10, overflow: 'hidden' }}>
+            <View style={{ height: '100%', width: `${happiness}%`, backgroundColor: '#E91E63', borderRadius: 6 }} />
           </View>
         </View>
 
