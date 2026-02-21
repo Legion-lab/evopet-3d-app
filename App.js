@@ -73,7 +73,7 @@ export default function App() {
       const mesh = new THREE.Mesh(geometry, material);
 
       // Position fixed relative to camera view
-      mesh.position.set(0, -0.5, -2);
+      mesh.position.set(0, -1.0, 2);
 
       sceneRef.current.add(mesh);
       foodMeshRef.current = mesh;
@@ -1118,6 +1118,7 @@ export default function App() {
                       setEquippedFood('snack');
                       // Fix: Ensure menu closes
                       setActiveActionSheet(null);
+                      setShowHUD(false);
                     }
                   }}
                 >
@@ -1137,6 +1138,7 @@ export default function App() {
                       setEquippedFood('dinner');
                       // Fix: Ensure menu closes
                       setActiveActionSheet(null);
+                      setShowHUD(false);
                     }
                   }}
                 >
