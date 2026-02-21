@@ -7,48 +7,89 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
-const callPetAI = async (userMessage, contextData, key) => {
+const callPetAI = async (userMessage, contextData, key, provider) => {
   if (!key || key.trim() === '') {
-    return { reply: "Zanim porozmawiamy, musisz wpisać klucz OpenAI w Ustawieniach gry!", action: "none" };
+    return { reply: "Musisz wpisać klucz API w Ustawieniach!", action: "none" };
   }
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${key}`
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: "Jesteś wirtualnym zwierzakiem. Właściciel: " + contextData.userName + ". Statystyki: Głód " + contextData.hunger + "/100, Energia " + contextData.energy + "/100. Odpowiadaj krótko i z humorem. MUSISZ zwrócić TYLKO poprawny JSON: { \"reply\": \"tekst\", \"action\": \"none\" lub \"jump\" }. Użyj 'jump' gdy jesteś radosny."
+    if (provider === 'openai') {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: "Jesteś wirtualnym zwierzakiem. Właściciel: " + contextData.userName + ". Statystyki: Głód " + contextData.hunger + "/100, Energia " + contextData.energy + "/100. Odpowiadaj krótko i z humorem. MUSISZ zwrócić TYLKO poprawny JSON: { \"reply\": \"tekst\", \"action\": \"none\" lub \"jump\" }. Użyj 'jump' gdy jesteś radosny."
+            },
+            {
+              role: "user",
+              content: userMessage
+            }
+          ],
+          temperature: 0.7
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.choices && data.choices.length > 0) {
+        const content = data.choices[0].message.content;
+        try {
+          const parsed = JSON.parse(content);
+          return parsed;
+        } catch (parseError) {
+          console.error("AI Parse Error:", parseError);
+          return { reply: content, action: "none" };
+        }
+      } else {
+        return { reply: "Coś poszło nie tak z moim mózgiem...", action: "none" };
+      }
+    } else if (provider === 'gemini') {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{
+              text: "Jesteś wirtualnym zwierzakiem. Właściciel: " + contextData.userName + ". Statystyki: Głód " + contextData.hunger + "/100, Energia " + contextData.energy + "/100. Odpowiadaj krótko i z humorem. MUSISZ zwrócić TYLKO poprawny JSON: { \"reply\": \"tekst\", \"action\": \"none\" lub \"jump\" }. Użyj 'jump' gdy jesteś radosny."
+            }]
           },
-          {
-            role: "user",
-            content: userMessage
+          contents: [{
+            role: 'user',
+            parts: [{ text: userMessage }]
+          }],
+          generationConfig: {
+            responseMimeType: "application/json"
           }
-        ],
-        temperature: 0.7
-      })
-    });
+        })
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (data.choices && data.choices.length > 0) {
-      const content = data.choices[0].message.content;
-      try {
-        const parsed = JSON.parse(content);
-        return parsed;
-      } catch (parseError) {
-        console.error("AI Parse Error:", parseError);
-        return { reply: content, action: "none" }; // Fallback if not JSON
+      if (data.candidates && data.candidates.length > 0) {
+        const content = data.candidates[0].content.parts[0].text;
+        try {
+          const parsed = JSON.parse(content);
+          return parsed;
+        } catch (parseError) {
+           console.error("AI Parse Error:", parseError);
+           return { reply: content, action: "none" };
+        }
+      } else {
+         return { reply: "Coś poszło nie tak z moim mózgiem...", action: "none" };
       }
     } else {
-      return { reply: "Coś poszło nie tak z moim mózgiem...", action: "none" };
+       return { reply: "Nieznany dostawca AI.", action: "none" };
     }
+
   } catch (error) {
     console.error("AI Network Error:", error);
     return { reply: "Nie mogę się połączyć z siecią. Sprawdź internet!", action: "none" };
@@ -148,6 +189,7 @@ export default function App() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [apiKey, setApiKey] = useState('');
+  const [apiProvider, setApiProvider] = useState('openai');
 
   useEffect(() => {
     gameOverRef.current = isGameOver;
@@ -156,7 +198,7 @@ export default function App() {
   useEffect(() => {
     const loadState = async () => {
       try {
-        const keys = ['@pet_stats', '@pet_name', '@user_name', '@is_first_launch', '@onboarding_step', '@sound_enabled', '@notifications_enabled', '@user_apikey'];
+        const keys = ['@pet_stats', '@pet_name', '@user_name', '@is_first_launch', '@onboarding_step', '@sound_enabled', '@notifications_enabled', '@user_apikey', '@user_api_provider'];
         const result = await AsyncStorage.multiGet(keys);
         const stores = Object.fromEntries(result);
 
@@ -235,6 +277,7 @@ export default function App() {
         if (stores['@sound_enabled']) setSoundEnabled(JSON.parse(stores['@sound_enabled']));
         if (stores['@notifications_enabled']) setNotificationsEnabled(JSON.parse(stores['@notifications_enabled']));
         if (stores['@user_apikey']) setApiKey(stores['@user_apikey']);
+        if (stores['@user_api_provider']) setApiProvider(stores['@user_api_provider']);
 
       } catch (e) {
         console.error("Failed to load state", e);
@@ -422,7 +465,7 @@ export default function App() {
       };
 
       // T-28: AI Logic Verified
-      callPetAI(userText, contextData, apiKey).then((response) => {
+      callPetAI(userText, contextData, apiKey, apiProvider).then((response) => {
         setMessages((prev) => [...prev, {
           sender: 'pet',
           text: response.reply
@@ -1036,20 +1079,68 @@ export default function App() {
                      <View style={{ marginBottom: 25 }}>
                        <Text style={{ color: '#888', fontSize: 12, fontWeight: 'bold', marginBottom: 5, marginLeft: 15 }}>SZTUCZNA INTELIGENCJA</Text>
                        <View style={{ backgroundColor: '#FFF', borderRadius: 15, padding: 15, elevation: 2 }}>
+
+                         {/* Provider Selector */}
+                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 }}>
+                           <TouchableOpacity
+                              style={{
+                                 flex: 1,
+                                 padding: 10,
+                                 backgroundColor: apiProvider === 'openai' ? '#007AFF' : '#EEE',
+                                 borderRadius: 8,
+                                 marginRight: 10,
+                                 alignItems: 'center'
+                              }}
+                              onPress={() => setApiProvider('openai')}
+                           >
+                              <Text style={{ color: apiProvider === 'openai' ? 'white' : 'black', fontWeight: 'bold' }}>OpenAI</Text>
+                           </TouchableOpacity>
+                           <TouchableOpacity
+                              style={{
+                                 flex: 1,
+                                 padding: 10,
+                                 backgroundColor: apiProvider === 'gemini' ? '#007AFF' : '#EEE',
+                                 borderRadius: 8,
+                                 marginLeft: 10,
+                                 alignItems: 'center'
+                              }}
+                              onPress={() => setApiProvider('gemini')}
+                           >
+                              <Text style={{ color: apiProvider === 'gemini' ? 'white' : 'black', fontWeight: 'bold' }}>Google Gemini</Text>
+                           </TouchableOpacity>
+                         </View>
+
                          <TextInput
                            style={{
                              borderWidth: 1,
                              borderColor: '#EEE',
                              borderRadius: 8,
                              padding: 10,
-                             color: '#000'
+                             color: '#000',
+                             marginBottom: 10
                            }}
-                           placeholder="Wklej klucz OpenAI API"
+                           placeholder={apiProvider === 'openai' ? "Wklej klucz OpenAI API" : "Wklej klucz Google Gemini API"}
                            placeholderTextColor="#aaa"
                            value={apiKey}
                            onChangeText={setApiKey}
                            secureTextEntry={true}
                          />
+
+                         <TouchableOpacity
+                           style={{
+                             backgroundColor: '#4CAF50',
+                             padding: 10,
+                             borderRadius: 8,
+                             alignItems: 'center'
+                           }}
+                           onPress={() => {
+                             AsyncStorage.setItem('@user_apikey', apiKey);
+                             AsyncStorage.setItem('@user_api_provider', apiProvider);
+                             Alert.alert('Sukces', 'Zapisano silnik i klucz API!');
+                           }}
+                         >
+                           <Text style={{ color: 'white', fontWeight: 'bold' }}>Zapisz klucz</Text>
+                         </TouchableOpacity>
                        </View>
                      </View>
 
