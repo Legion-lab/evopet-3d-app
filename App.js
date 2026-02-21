@@ -39,7 +39,8 @@ const callPetAI = async (userMessage, contextData, key, provider) => {
       const data = await response.json();
 
       if (data.choices && data.choices.length > 0) {
-        const content = data.choices[0].message.content;
+        let content = data.choices[0].message.content;
+        content = content.replace(/```json/g, '').replace(/```/g, '').trim();
         try {
           const parsed = JSON.parse(content);
           return parsed;
@@ -75,7 +76,8 @@ const callPetAI = async (userMessage, contextData, key, provider) => {
       const data = await response.json();
 
       if (data.candidates && data.candidates.length > 0) {
-        const content = data.candidates[0].content.parts[0].text;
+        let content = data.candidates[0].content.parts[0].text;
+        content = content.replace(/```json/g, '').replace(/```/g, '').trim();
         try {
           const parsed = JSON.parse(content);
           return parsed;
@@ -604,10 +606,14 @@ export default function App() {
         const { dx, dy } = gestureState;
 
         // T-28: Debug Log for Swipe
-        console.log('GEST SWIPE:', dy);
+        console.log('GEST SWIPE:', dy, '| TRZYMANE JEDZENIE:', equippedFoodRef.current);
 
         // Detect Upward Swipe (Throw) - lowered threshold to -20
         if (dy < -20 && equippedFoodRef.current) {
+           console.log('WYSTRZAŁ! Prędkość nadana.');
+           if (foodMeshRef.current) {
+             foodMeshRef.current.position.set(0, -0.5, -2);
+           }
            const item = equippedFoodRef.current;
 
            // Decrease inventory
@@ -913,7 +919,7 @@ export default function App() {
                  </KeyboardAvoidingView>
                ) : activeModal === 'Sklep' ? (
                  <View style={{ height: 220 }}>
-                   <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ padding: 10, gap: 15 }}>
+                   <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={{ flexGrow: 1, width: '100%', minHeight: 200 }} contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 20, gap: 15 }}>
                      <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
                        <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Przekąska</Text>
                        <Text style={{ fontSize: 50 }}>🍎</Text>
@@ -1002,7 +1008,7 @@ export default function App() {
                  </View>
                ) : activeModal === 'Plecak' ? (
                  <View style={{ height: 220 }}>
-                   <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ padding: 10, gap: 15 }}>
+                   <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={{ flexGrow: 1, width: '100%', minHeight: 200 }} contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 20, gap: 15 }}>
                      <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
                        <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Przekąska</Text>
                        <Text style={{ fontSize: 50 }}>🍎</Text>
@@ -1253,7 +1259,7 @@ export default function App() {
              activeActionSheet === 'hygiene' ? 'Higiena' : 'Zabawa'}
           </Text>
 
-          <ScrollView horizontal={true} contentContainerStyle={{ gap: 10, paddingHorizontal: 10 }} showsHorizontalScrollIndicator={false}>
+          <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={{ flexGrow: 1, width: '100%', minHeight: 200 }} contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 20, gap: 15 }}>
             {activeActionSheet === 'food' && (
               <>
                 <TouchableOpacity
