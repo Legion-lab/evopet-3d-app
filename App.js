@@ -259,8 +259,10 @@ export default function App() {
           setInventory(inventory);
           setHungerBuffUntil(hungerBuffUntil);
           setEnergyBuffUntil(energyBuffUntil);
-          if (coins !== undefined) setCoins(coins);
+          if (coins !== undefined) setCoins(Math.max(coins, 500)); // T-34: Ensure min 500 coins
           if (isSleeping !== undefined) setIsSleeping(isSleeping);
+        } else {
+          setCoins(500); // T-34: New user starts with 500
         }
 
         if (stores['@pet_name']) setPetName(stores['@pet_name']);
@@ -339,7 +341,7 @@ export default function App() {
         setHappiness((prev) => Math.max(prev - 0.5, 0));
         setRoomHygiene((prev) => Math.max(prev - 0.5, 0));
       } else {
-        // Awake Mode: Normal decay
+        // Awake Mode: Normal decay (T-34: 1 point per minute)
         if (!isHungerProtected) {
           setHunger((prev) => {
             const newValue = prev - 1;
@@ -355,7 +357,7 @@ export default function App() {
         setHappiness((prev) => Math.max(prev - 1, 0));
         setRoomHygiene((prev) => Math.max(prev - 1, 0));
       }
-    }, 1000);
+    }, 60000); // T-34: 1 minute interval
 
     return () => clearInterval(interval);
   }, [isSleeping, hungerBuffUntil, energyBuffUntil]);
@@ -867,19 +869,19 @@ export default function App() {
          <View style={styles.modalOverlay}>
             <View style={[
               styles.modalContent,
-              activeModal === 'Ustawienia' && { backgroundColor: '#F2F2F7', width: '95%', height: '85%', padding: 20 }
+              (activeModal === 'Ustawienia' || activeModal === 'Profil') && { backgroundColor: '#F2F2F7', width: '95%', height: '85%', padding: 20 }
             ]}>
                <Text style={{
-                 color: activeModal === 'Ustawienia' ? '#000' : 'white',
+                 color: (activeModal === 'Ustawienia' || activeModal === 'Profil') ? '#000' : 'white',
                  fontSize: 24,
                  fontWeight: 'bold',
                  marginBottom: 20
                }}>
-                 {activeModal === 'Ustawienia' ? 'Ustawienia' : `Witaj w: ${activeModal}`}
+                 {activeModal === 'Ustawienia' ? 'Ustawienia' : activeModal === 'Profil' ? 'Profil Pupila' : `Witaj w: ${activeModal}`}
                </Text>
                <TouchableOpacity
                  onPress={() => setActiveModal(null)}
-                 style={[styles.closeButton, activeModal === 'Ustawienia' && { backgroundColor: 'rgba(0,0,0,0.1)' }]}
+                 style={[styles.closeButton, (activeModal === 'Ustawienia' || activeModal === 'Profil') && { backgroundColor: 'rgba(0,0,0,0.1)' }]}
                >
                   <Text style={{ color: 'white', fontSize: 14 }}>❌</Text>
                </TouchableOpacity>
@@ -919,8 +921,8 @@ export default function App() {
                  </KeyboardAvoidingView>
                ) : activeModal === 'Sklep' ? (
                  <View style={{ height: 220 }}>
-                   <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={{ flexGrow: 1, width: '100%', minHeight: 200 }} contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 20, gap: 15 }}>
-                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
+                   <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={{ height: 200, flexGrow: 0, width: '100%' }} contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 20, gap: 15 }}>
+                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5, borderWidth: 2, borderColor: '#666' }}>
                        <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Przekąska</Text>
                        <Text style={{ fontSize: 50 }}>🍎</Text>
                        <TouchableOpacity
@@ -937,7 +939,7 @@ export default function App() {
                        </TouchableOpacity>
                      </View>
 
-                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
+                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5, borderWidth: 2, borderColor: '#666' }}>
                        <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Pełny Obiad</Text>
                        <Text style={{ fontSize: 50 }}>🍱</Text>
                        <TouchableOpacity
@@ -954,7 +956,7 @@ export default function App() {
                        </TouchableOpacity>
                      </View>
 
-                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
+                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5, borderWidth: 2, borderColor: '#666' }}>
                        <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Kawa</Text>
                        <Text style={{ fontSize: 50 }}>☕</Text>
                        <TouchableOpacity
@@ -971,7 +973,7 @@ export default function App() {
                        </TouchableOpacity>
                      </View>
 
-                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
+                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5, borderWidth: 2, borderColor: '#666' }}>
                        <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Buster Głodu 12h</Text>
                        <Text style={{ fontSize: 50 }}>🛡️</Text>
                        <TouchableOpacity
@@ -988,7 +990,7 @@ export default function App() {
                        </TouchableOpacity>
                      </View>
 
-                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
+                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5, borderWidth: 2, borderColor: '#666' }}>
                        <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Buster Energii 12h</Text>
                        <Text style={{ fontSize: 50 }}>⚡</Text>
                        <TouchableOpacity
@@ -1008,37 +1010,116 @@ export default function App() {
                  </View>
                ) : activeModal === 'Plecak' ? (
                  <View style={{ height: 220 }}>
-                   <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={{ flexGrow: 1, width: '100%', minHeight: 200 }} contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 20, gap: 15 }}>
-                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
+                   <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={{ height: 200, flexGrow: 0, width: '100%' }} contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 20, gap: 15 }}>
+                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5, borderWidth: 2, borderColor: '#666' }}>
                        <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Przekąska</Text>
                        <Text style={{ fontSize: 50 }}>🍎</Text>
                        <Text style={{ color: '#aaa', fontWeight: 'bold' }}>Posiadasz: {inventory.snack}</Text>
                      </View>
 
-                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
+                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5, borderWidth: 2, borderColor: '#666' }}>
                        <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Obiad</Text>
                        <Text style={{ fontSize: 50 }}>🍱</Text>
                        <Text style={{ color: '#aaa', fontWeight: 'bold' }}>Posiadasz: {inventory.dinner}</Text>
                      </View>
 
-                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
+                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5, borderWidth: 2, borderColor: '#666' }}>
                        <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Kawa</Text>
                        <Text style={{ fontSize: 50 }}>☕</Text>
                        <Text style={{ color: '#aaa', fontWeight: 'bold' }}>Posiadasz: {inventory.coffee}</Text>
                      </View>
 
-                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
+                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5, borderWidth: 2, borderColor: '#666' }}>
                        <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Buster Głodu 12h</Text>
                        <Text style={{ fontSize: 50 }}>🛡️</Text>
                        <Text style={{ color: '#aaa', fontWeight: 'bold' }}>Posiadasz: {inventory.hungerBuster}</Text>
                      </View>
 
-                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
+                     <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5, borderWidth: 2, borderColor: '#666' }}>
                        <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Buster Energii 12h</Text>
                        <Text style={{ fontSize: 50 }}>⚡</Text>
                        <Text style={{ color: '#aaa', fontWeight: 'bold' }}>Posiadasz: {inventory.energyBuster}</Text>
                      </View>
                    </ScrollView>
+                 </View>
+               ) : activeModal === 'Profil' ? (
+                 <View style={{ width: '100%', padding: 10 }}>
+                   <View style={{ alignItems: 'center', marginBottom: 20 }}>
+                     <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#333' }}>{petName || 'Bobas'}</Text>
+                     <Text style={{ fontSize: 16, color: '#666' }}>Wiek: 1 dzień</Text>
+                   </View>
+
+                   <View style={{ width: '100%', gap: 15 }}>
+                     <View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
+                          <Text style={{ fontWeight: 'bold', color: '#555' }}>Głód</Text>
+                          <Text style={{ color: '#555' }}>{Math.round(hunger)}%</Text>
+                        </View>
+                        <View style={{ height: 12, backgroundColor: '#E0E0E0', borderRadius: 6, overflow: 'hidden' }}>
+                          <View style={{ width: `${hunger}%`, height: '100%', backgroundColor: '#FF5252' }} />
+                        </View>
+                     </View>
+
+                     <View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
+                          <Text style={{ fontWeight: 'bold', color: '#555' }}>Energia</Text>
+                          <Text style={{ color: '#555' }}>{Math.round(energy)}%</Text>
+                        </View>
+                        <View style={{ height: 12, backgroundColor: '#E0E0E0', borderRadius: 6, overflow: 'hidden' }}>
+                          <View style={{ width: `${energy}%`, height: '100%', backgroundColor: '#FFD700' }} />
+                        </View>
+                     </View>
+
+                     <View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
+                          <Text style={{ fontWeight: 'bold', color: '#555' }}>Higiena</Text>
+                          <Text style={{ color: '#555' }}>{Math.round(hygiene)}%</Text>
+                        </View>
+                        <View style={{ height: 12, backgroundColor: '#E0E0E0', borderRadius: 6, overflow: 'hidden' }}>
+                          <View style={{ width: `${hygiene}%`, height: '100%', backgroundColor: '#2196F3' }} />
+                        </View>
+                     </View>
+
+                     <View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
+                          <Text style={{ fontWeight: 'bold', color: '#555' }}>Szczęście</Text>
+                          <Text style={{ color: '#555' }}>{Math.round(happiness)}%</Text>
+                        </View>
+                        <View style={{ height: 12, backgroundColor: '#E0E0E0', borderRadius: 6, overflow: 'hidden' }}>
+                          <View style={{ width: `${happiness}%`, height: '100%', backgroundColor: '#E91E63' }} />
+                        </View>
+                     </View>
+                   </View>
+
+                   <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 30 }}>
+                      <TouchableOpacity onPress={() => { setActiveModal(null); setActiveActionSheet('food'); }} style={{ alignItems: 'center' }}>
+                         <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#FF5252', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
+                            <Text style={{ fontSize: 24 }}>🍖</Text>
+                         </View>
+                         <Text style={{ color: '#555', fontSize: 10, marginTop: 5, fontWeight: 'bold' }}>Nakarm</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity onPress={() => { setActiveModal(null); setActiveActionSheet('energy'); }} style={{ alignItems: 'center' }}>
+                         <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#FFD700', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
+                            <Text style={{ fontSize: 24 }}>⚡</Text>
+                         </View>
+                         <Text style={{ color: '#555', fontSize: 10, marginTop: 5, fontWeight: 'bold' }}>Sen</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity onPress={() => { setActiveModal(null); setActiveActionSheet('hygiene'); }} style={{ alignItems: 'center' }}>
+                         <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#2196F3', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
+                            <Text style={{ fontSize: 24 }}>🚿</Text>
+                         </View>
+                         <Text style={{ color: '#555', fontSize: 10, marginTop: 5, fontWeight: 'bold' }}>Umyj</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity onPress={() => { setActiveModal(null); setActiveActionSheet('play'); }} style={{ alignItems: 'center' }}>
+                         <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#E91E63', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
+                            <Text style={{ fontSize: 24 }}>⚽</Text>
+                         </View>
+                         <Text style={{ color: '#555', fontSize: 10, marginTop: 5, fontWeight: 'bold' }}>Baw się</Text>
+                      </TouchableOpacity>
+                   </View>
                  </View>
                ) : activeModal === 'Ustawienia' ? (
                  <View style={{ flex: 1, width: '100%' }}>
@@ -1180,70 +1261,8 @@ export default function App() {
          </View>
       )}
 
-      {showHUD && (
-      <View style={{
-        backgroundColor: 'rgba(0,0,0,0.8)',
-        borderRadius: 20,
-        padding: 20,
-        width: '90%',
-        alignSelf: 'center',
-        position: 'absolute',
-        bottom: 100
-      }}>
-        {/* Hunger */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-          <Text style={{ fontSize: 20, width: 30 }}>🍖</Text>
-          <View style={{ height: 12, backgroundColor: '#444', borderRadius: 6, flex: 1, marginHorizontal: 10, overflow: 'hidden' }}>
-            <View style={{ height: '100%', width: `${hunger}%`, backgroundColor: '#FF5252', borderRadius: 6 }} />
-          </View>
-        </View>
-
-        {/* Energy */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-          <Text style={{ fontSize: 20, width: 30 }}>⚡</Text>
-          <View style={{ height: 12, backgroundColor: '#444', borderRadius: 6, flex: 1, marginHorizontal: 10, overflow: 'hidden' }}>
-            <View style={{ height: '100%', width: `${energy}%`, backgroundColor: '#FFD700', borderRadius: 6 }} />
-          </View>
-        </View>
-
-        {/* Hygiene */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-          <Text style={{ fontSize: 20, width: 30 }}>🚿</Text>
-          <View style={{ height: 12, backgroundColor: '#444', borderRadius: 6, flex: 1, marginHorizontal: 10, overflow: 'hidden' }}>
-            <View style={{ height: '100%', width: `${hygiene}%`, backgroundColor: '#2196F3', borderRadius: 6 }} />
-          </View>
-        </View>
-
-        {/* Happiness */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-          <Text style={{ fontSize: 20, width: 30 }}>💖</Text>
-          <View style={{ height: 12, backgroundColor: '#444', borderRadius: 6, flex: 1, marginHorizontal: 10, overflow: 'hidden' }}>
-            <View style={{ height: '100%', width: `${happiness}%`, backgroundColor: '#E91E63', borderRadius: 6 }} />
-          </View>
-        </View>
-
-        {/* Action Buttons Row */}
-        {!isGameOver && (
-          <View style={styles.actionRow}>
-            <TouchableOpacity onPress={() => setActiveActionSheet('food')} style={styles.roundActionButton}>
-              <Text style={{ fontSize: 24 }}>🍖</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setActiveActionSheet('energy')} style={styles.roundActionButton}>
-              <Text style={{ fontSize: 24 }}>⚡</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setActiveActionSheet('hygiene')} style={styles.roundActionButton}>
-              <Text style={{ fontSize: 24 }}>🚿</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setActiveActionSheet('play')} style={styles.roundActionButton}>
-              <Text style={{ fontSize: 24 }}>⚽</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-      )}
-
       {/* Central Button */}
-      <TouchableOpacity onPress={() => setShowHUD(!showHUD)} style={styles.centralButton}>
+      <TouchableOpacity onPress={() => setActiveModal('Profil')} style={styles.centralButton}>
         <Text style={{ fontSize: 30 }}>🐾</Text>
       </TouchableOpacity>
 
