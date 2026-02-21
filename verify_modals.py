@@ -16,7 +16,7 @@ def verify_modals():
 
         # Wait for the app to load (look for the coins display or stats button)
         try:
-            page.wait_for_selector("text=📊", timeout=120000)
+            page.wait_for_selector("text=🪙", timeout=120000)
             print("App loaded.")
         except:
             print("App load timeout or selector not found. Taking debug screenshot.")
@@ -48,7 +48,7 @@ def verify_modals():
         # Close Modal
         print("Closing Shop...")
         try:
-            page.click("text=Zamknij")
+            page.click("text=❌")
             time.sleep(1)
         except:
             print("Could not find Close button.")
