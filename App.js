@@ -7,17 +7,52 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
-const callPetAI = async (userMessage, contextData) => {
-  console.log("AI Context:", JSON.stringify(contextData, null, 2));
+const callPetAI = async (userMessage, contextData, key) => {
+  if (!key || key.trim() === '') {
+    return { reply: "Zanim porozmawiamy, musisz wpisać klucz OpenAI w Ustawieniach gry!", action: "none" };
+  }
 
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        reply: "Zrozumiałem! Mam dużo energii i czuję się świetnie!",
-        action: "jump"
-      });
-    }, 1000);
-  });
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Jesteś wirtualnym zwierzakiem. Właściciel: " + contextData.userName + ". Statystyki: Głód " + contextData.hunger + "/100, Energia " + contextData.energy + "/100. Odpowiadaj krótko i z humorem. MUSISZ zwrócić TYLKO poprawny JSON: { \"reply\": \"tekst\", \"action\": \"none\" lub \"jump\" }. Użyj 'jump' gdy jesteś radosny."
+          },
+          {
+            role: "user",
+            content: userMessage
+          }
+        ],
+        temperature: 0.7
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.choices && data.choices.length > 0) {
+      const content = data.choices[0].message.content;
+      try {
+        const parsed = JSON.parse(content);
+        return parsed;
+      } catch (parseError) {
+        console.error("AI Parse Error:", parseError);
+        return { reply: content, action: "none" }; // Fallback if not JSON
+      }
+    } else {
+      return { reply: "Coś poszło nie tak z moim mózgiem...", action: "none" };
+    }
+  } catch (error) {
+    console.error("AI Network Error:", error);
+    return { reply: "Nie mogę się połączyć z siecią. Sprawdź internet!", action: "none" };
+  }
 };
 
 export default function App() {
@@ -112,6 +147,7 @@ export default function App() {
 
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [apiKey, setApiKey] = useState('');
 
   useEffect(() => {
     gameOverRef.current = isGameOver;
@@ -120,7 +156,7 @@ export default function App() {
   useEffect(() => {
     const loadState = async () => {
       try {
-        const keys = ['@pet_stats', '@pet_name', '@user_name', '@is_first_launch', '@onboarding_step', '@sound_enabled', '@notifications_enabled'];
+        const keys = ['@pet_stats', '@pet_name', '@user_name', '@is_first_launch', '@onboarding_step', '@sound_enabled', '@notifications_enabled', '@user_apikey'];
         const result = await AsyncStorage.multiGet(keys);
         const stores = Object.fromEntries(result);
 
@@ -198,6 +234,7 @@ export default function App() {
 
         if (stores['@sound_enabled']) setSoundEnabled(JSON.parse(stores['@sound_enabled']));
         if (stores['@notifications_enabled']) setNotificationsEnabled(JSON.parse(stores['@notifications_enabled']));
+        if (stores['@user_apikey']) setApiKey(stores['@user_apikey']);
 
       } catch (e) {
         console.error("Failed to load state", e);
@@ -237,8 +274,9 @@ export default function App() {
     if (isLoaded) {
       AsyncStorage.setItem('@sound_enabled', JSON.stringify(soundEnabled));
       AsyncStorage.setItem('@notifications_enabled', JSON.stringify(notificationsEnabled));
+      AsyncStorage.setItem('@user_apikey', apiKey);
     }
-  }, [soundEnabled, notificationsEnabled, isLoaded]);
+  }, [soundEnabled, notificationsEnabled, apiKey, isLoaded]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -384,7 +422,7 @@ export default function App() {
       };
 
       // T-28: AI Logic Verified
-      callPetAI(userText, contextData).then((response) => {
+      callPetAI(userText, contextData, apiKey).then((response) => {
         setMessages((prev) => [...prev, {
           sender: 'pet',
           text: response.reply
@@ -885,7 +923,7 @@ export default function App() {
                      </View>
 
                      <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
-                       <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Buster Głodu</Text>
+                       <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Buster Głodu 12h</Text>
                        <Text style={{ fontSize: 50 }}>🛡️</Text>
                        <TouchableOpacity
                          style={{ backgroundColor: coins >= 50 ? '#4CAF50' : '#555', padding: 8, borderRadius: 5, width: '100%', alignItems: 'center' }}
@@ -902,7 +940,7 @@ export default function App() {
                      </View>
 
                      <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
-                       <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Buster Energii</Text>
+                       <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Buster Energii 12h</Text>
                        <Text style={{ fontSize: 50 }}>⚡</Text>
                        <TouchableOpacity
                          style={{ backgroundColor: coins >= 50 ? '#4CAF50' : '#555', padding: 8, borderRadius: 5, width: '100%', alignItems: 'center' }}
@@ -941,13 +979,13 @@ export default function App() {
                      </View>
 
                      <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
-                       <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Buster Głodu</Text>
+                       <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Buster Głodu 12h</Text>
                        <Text style={{ fontSize: 50 }}>🛡️</Text>
                        <Text style={{ color: '#aaa', fontWeight: 'bold' }}>Posiadasz: {inventory.hungerBuster}</Text>
                      </View>
 
                      <View style={{ width: 130, height: 180, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}>
-                       <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Buster Energii</Text>
+                       <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Buster Energii 12h</Text>
                        <Text style={{ fontSize: 50 }}>⚡</Text>
                        <Text style={{ color: '#aaa', fontWeight: 'bold' }}>Posiadasz: {inventory.energyBuster}</Text>
                      </View>
@@ -991,6 +1029,27 @@ export default function App() {
                              value={notificationsEnabled}
                            />
                          </View>
+                       </View>
+                     </View>
+
+                     {/* AI Group */}
+                     <View style={{ marginBottom: 25 }}>
+                       <Text style={{ color: '#888', fontSize: 12, fontWeight: 'bold', marginBottom: 5, marginLeft: 15 }}>SZTUCZNA INTELIGENCJA</Text>
+                       <View style={{ backgroundColor: '#FFF', borderRadius: 15, padding: 15, elevation: 2 }}>
+                         <TextInput
+                           style={{
+                             borderWidth: 1,
+                             borderColor: '#EEE',
+                             borderRadius: 8,
+                             padding: 10,
+                             color: '#000'
+                           }}
+                           placeholder="Wklej klucz OpenAI API"
+                           placeholderTextColor="#aaa"
+                           value={apiKey}
+                           onChangeText={setApiKey}
+                           secureTextEntry={true}
+                         />
                        </View>
                      </View>
 
