@@ -187,6 +187,9 @@ export default function App() {
   const [strength, setStrength] = useState(0);
   const [intelligence, setIntelligence] = useState(0);
   const [laziness, setLaziness] = useState(0);
+  const [bond, setBond] = useState(0);
+  const [fitness, setFitness] = useState(0);
+  const [profileTab, setProfileTab] = useState('needs');
 
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -207,13 +210,15 @@ export default function App() {
         const jsonValue = stores['@pet_stats'];
         if (jsonValue != null) {
           const data = JSON.parse(jsonValue);
-          let { hunger, energy, hygiene, happiness, coins, isSleeping, lastSavedTime, roomHygiene, strength, intelligence, laziness, inventory, hungerBuffUntil, energyBuffUntil } = data;
+          let { hunger, energy, hygiene, happiness, coins, isSleeping, lastSavedTime, roomHygiene, strength, intelligence, laziness, bond, fitness, inventory, hungerBuffUntil, energyBuffUntil } = data;
 
           // Default roomHygiene to 100 if missing
           if (roomHygiene === undefined) roomHygiene = 100;
           if (strength === undefined) strength = 0;
           if (intelligence === undefined) intelligence = 0;
           if (laziness === undefined) laziness = 0;
+          if (bond === undefined) bond = 0;
+          if (fitness === undefined) fitness = 0;
           if (inventory === undefined) inventory = { snack: 0, dinner: 0, coffee: 0, hungerBuster: 0, energyBuster: 0 };
           if (inventory.hungerBuster === undefined) inventory.hungerBuster = 0;
           if (inventory.energyBuster === undefined) inventory.energyBuster = 0;
@@ -256,6 +261,8 @@ export default function App() {
           setStrength(strength);
           setIntelligence(intelligence);
           setLaziness(laziness);
+          setBond(bond);
+          setFitness(fitness);
           setInventory(inventory);
           setHungerBuffUntil(hungerBuffUntil);
           setEnergyBuffUntil(energyBuffUntil);
@@ -296,7 +303,7 @@ export default function App() {
     if (isLoaded) {
       const saveState = async () => {
         try {
-          const data = { hunger, energy, hygiene, happiness, coins, isSleeping, roomHygiene, strength, intelligence, laziness, inventory, hungerBuffUntil, energyBuffUntil, lastSavedTime: Date.now() };
+          const data = { hunger, energy, hygiene, happiness, coins, isSleeping, roomHygiene, strength, intelligence, laziness, bond, fitness, inventory, hungerBuffUntil, energyBuffUntil, lastSavedTime: Date.now() };
           await AsyncStorage.setItem('@pet_stats', JSON.stringify(data));
         } catch (e) {
           console.error("Failed to save state", e);
@@ -304,7 +311,7 @@ export default function App() {
       };
       saveState();
     }
-  }, [hunger, energy, hygiene, happiness, coins, isSleeping, roomHygiene, strength, intelligence, laziness, inventory, hungerBuffUntil, energyBuffUntil, isLoaded]);
+  }, [hunger, energy, hygiene, happiness, coins, isSleeping, roomHygiene, strength, intelligence, laziness, bond, fitness, inventory, hungerBuffUntil, energyBuffUntil, isLoaded]);
 
   // Save onboarding/profile state separately
   useEffect(() => {
@@ -464,7 +471,7 @@ export default function App() {
         pet_name: petName,
         stats: { hunger, energy, happiness, hygiene },
         inventory,
-        rpg_stats: { strength, intelligence, laziness },
+        rpg_stats: { strength, intelligence, laziness, bond, fitness },
         message: userText
       };
 
@@ -492,11 +499,13 @@ export default function App() {
     setStrength(0);
     setIntelligence(0);
     setLaziness(0);
+    setBond(0);
+    setFitness(0);
     setInventory({ snack: 0, dinner: 0, coffee: 0 });
     setIsGameOver(false);
 
     try {
-      const data = { hunger: 80, energy: 80, hygiene: 80, happiness: 80, roomHygiene: 100, strength: 0, intelligence: 0, laziness: 0, inventory: { snack: 0, dinner: 0, coffee: 0 }, lastSavedTime: Date.now() };
+      const data = { hunger: 80, energy: 80, hygiene: 80, happiness: 80, roomHygiene: 100, strength: 0, intelligence: 0, laziness: 0, bond: 0, fitness: 0, inventory: { snack: 0, dinner: 0, coffee: 0 }, lastSavedTime: Date.now() };
       await AsyncStorage.setItem('@pet_stats', JSON.stringify(data));
     } catch (e) {
       console.error("Failed to reset state", e);
@@ -527,6 +536,8 @@ export default function App() {
               setStrength(0);
               setIntelligence(0);
               setLaziness(0);
+              setBond(0);
+              setFitness(0);
               setIsGameOver(false);
 
               setPetName('Bobas');
@@ -1044,82 +1055,163 @@ export default function App() {
                  </View>
                ) : activeModal === 'Profil' ? (
                  <View style={{ width: '100%', padding: 10 }}>
+                   {/* Header: Metryczka */}
                    <View style={{ alignItems: 'center', marginBottom: 20 }}>
-                     <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#333' }}>{petName || 'Bobas'}</Text>
-                     <Text style={{ fontSize: 16, color: '#666' }}>Wiek: 1 dzień</Text>
+                     <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#333' }}>Imię: {petName || 'Bobas'}</Text>
+                     <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#555', marginTop: 5 }}>Faza: Nastolatek</Text>
                    </View>
 
-                   <View style={{ width: '100%', gap: 15 }}>
-                     <View>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
-                          <Text style={{ fontWeight: 'bold', color: '#555' }}>Głód</Text>
-                          <Text style={{ color: '#555' }}>{Math.round(hunger)}%</Text>
-                        </View>
-                        <View style={{ height: 12, backgroundColor: '#E0E0E0', borderRadius: 6, overflow: 'hidden' }}>
-                          <View style={{ width: `${hunger}%`, height: '100%', backgroundColor: '#FF5252' }} />
-                        </View>
-                     </View>
-
-                     <View>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
-                          <Text style={{ fontWeight: 'bold', color: '#555' }}>Energia</Text>
-                          <Text style={{ color: '#555' }}>{Math.round(energy)}%</Text>
-                        </View>
-                        <View style={{ height: 12, backgroundColor: '#E0E0E0', borderRadius: 6, overflow: 'hidden' }}>
-                          <View style={{ width: `${energy}%`, height: '100%', backgroundColor: '#FFD700' }} />
-                        </View>
-                     </View>
-
-                     <View>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
-                          <Text style={{ fontWeight: 'bold', color: '#555' }}>Higiena</Text>
-                          <Text style={{ color: '#555' }}>{Math.round(hygiene)}%</Text>
-                        </View>
-                        <View style={{ height: 12, backgroundColor: '#E0E0E0', borderRadius: 6, overflow: 'hidden' }}>
-                          <View style={{ width: `${hygiene}%`, height: '100%', backgroundColor: '#2196F3' }} />
-                        </View>
-                     </View>
-
-                     <View>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
-                          <Text style={{ fontWeight: 'bold', color: '#555' }}>Szczęście</Text>
-                          <Text style={{ color: '#555' }}>{Math.round(happiness)}%</Text>
-                        </View>
-                        <View style={{ height: 12, backgroundColor: '#E0E0E0', borderRadius: 6, overflow: 'hidden' }}>
-                          <View style={{ width: `${happiness}%`, height: '100%', backgroundColor: '#E91E63' }} />
-                        </View>
-                     </View>
+                   {/* Tab Switcher */}
+                   <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 20, gap: 15 }}>
+                     <TouchableOpacity
+                       onPress={() => setProfileTab('needs')}
+                       style={{
+                         backgroundColor: profileTab === 'needs' ? '#007AFF' : '#DDD',
+                         paddingVertical: 10,
+                         paddingHorizontal: 25,
+                         borderRadius: 20
+                       }}
+                     >
+                       <Text style={{ color: profileTab === 'needs' ? 'white' : '#333', fontWeight: 'bold' }}>Potrzeby</Text>
+                     </TouchableOpacity>
+                     <TouchableOpacity
+                       onPress={() => setProfileTab('character')}
+                       style={{
+                         backgroundColor: profileTab === 'character' ? '#007AFF' : '#DDD',
+                         paddingVertical: 10,
+                         paddingHorizontal: 25,
+                         borderRadius: 20
+                       }}
+                     >
+                       <Text style={{ color: profileTab === 'character' ? 'white' : '#333', fontWeight: 'bold' }}>Charakter</Text>
+                     </TouchableOpacity>
                    </View>
 
-                   <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 30 }}>
-                      <TouchableOpacity onPress={() => { setActiveModal(null); setActiveActionSheet('food'); }} style={{ alignItems: 'center' }}>
-                         <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#FF5252', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
-                            <Text style={{ fontSize: 24 }}>🍖</Text>
-                         </View>
-                         <Text style={{ color: '#555', fontSize: 10, marginTop: 5, fontWeight: 'bold' }}>Nakarm</Text>
-                      </TouchableOpacity>
+                   {/* Dynamic Content */}
+                   {profileTab === 'needs' ? (
+                     <View style={{ width: '100%', paddingHorizontal: 10, gap: 15 }}>
+                       {/* Hunger */}
+                       <View>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
+                            <Text style={{ fontWeight: 'bold', color: '#333', fontSize: 14 }}>Głód</Text>
+                            <Text style={{ color: '#555', fontSize: 14 }}>{Math.round(hunger)}/100</Text>
+                          </View>
+                          <View style={{ height: 20, backgroundColor: '#333', borderRadius: 10, overflow: 'hidden' }}>
+                            <View style={{ width: `${hunger}%`, height: '100%', backgroundColor: '#FF5252' }} />
+                          </View>
+                       </View>
 
-                      <TouchableOpacity onPress={() => { setActiveModal(null); setActiveActionSheet('energy'); }} style={{ alignItems: 'center' }}>
-                         <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#FFD700', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
-                            <Text style={{ fontSize: 24 }}>⚡</Text>
-                         </View>
-                         <Text style={{ color: '#555', fontSize: 10, marginTop: 5, fontWeight: 'bold' }}>Sen</Text>
-                      </TouchableOpacity>
+                       {/* Energy */}
+                       <View>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
+                            <Text style={{ fontWeight: 'bold', color: '#333', fontSize: 14 }}>Energia</Text>
+                            <Text style={{ color: '#555', fontSize: 14 }}>{Math.round(energy)}/100</Text>
+                          </View>
+                          <View style={{ height: 20, backgroundColor: '#333', borderRadius: 10, overflow: 'hidden' }}>
+                            <View style={{ width: `${energy}%`, height: '100%', backgroundColor: '#FFD700' }} />
+                          </View>
+                       </View>
 
-                      <TouchableOpacity onPress={() => { setActiveModal(null); setActiveActionSheet('hygiene'); }} style={{ alignItems: 'center' }}>
-                         <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#2196F3', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
-                            <Text style={{ fontSize: 24 }}>🚿</Text>
-                         </View>
-                         <Text style={{ color: '#555', fontSize: 10, marginTop: 5, fontWeight: 'bold' }}>Umyj</Text>
-                      </TouchableOpacity>
+                       {/* Hygiene */}
+                       <View>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
+                            <Text style={{ fontWeight: 'bold', color: '#333', fontSize: 14 }}>Higiena</Text>
+                            <Text style={{ color: '#555', fontSize: 14 }}>{Math.round(hygiene)}/100</Text>
+                          </View>
+                          <View style={{ height: 20, backgroundColor: '#333', borderRadius: 10, overflow: 'hidden' }}>
+                            <View style={{ width: `${hygiene}%`, height: '100%', backgroundColor: '#2196F3' }} />
+                          </View>
+                       </View>
 
-                      <TouchableOpacity onPress={() => { setActiveModal(null); setActiveActionSheet('play'); }} style={{ alignItems: 'center' }}>
-                         <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#E91E63', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
-                            <Text style={{ fontSize: 24 }}>⚽</Text>
-                         </View>
-                         <Text style={{ color: '#555', fontSize: 10, marginTop: 5, fontWeight: 'bold' }}>Baw się</Text>
-                      </TouchableOpacity>
-                   </View>
+                       {/* Happiness */}
+                       <View>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
+                            <Text style={{ fontWeight: 'bold', color: '#333', fontSize: 14 }}>Szczęście</Text>
+                            <Text style={{ color: '#555', fontSize: 14 }}>{Math.round(happiness)}/100</Text>
+                          </View>
+                          <View style={{ height: 20, backgroundColor: '#333', borderRadius: 10, overflow: 'hidden' }}>
+                            <View style={{ width: `${happiness}%`, height: '100%', backgroundColor: '#E91E63' }} />
+                          </View>
+                       </View>
+
+                       {/* Action Buttons (Restored for Playability) */}
+                       <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 20 }}>
+                          <TouchableOpacity onPress={() => { setActiveModal(null); setActiveActionSheet('food'); }} style={{ alignItems: 'center' }}>
+                             <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#FF5252', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
+                                <Text style={{ fontSize: 24 }}>🍖</Text>
+                             </View>
+                             <Text style={{ color: '#555', fontSize: 10, marginTop: 5, fontWeight: 'bold' }}>Nakarm</Text>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity onPress={() => { setActiveModal(null); setActiveActionSheet('energy'); }} style={{ alignItems: 'center' }}>
+                             <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#FFD700', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
+                                <Text style={{ fontSize: 24 }}>⚡</Text>
+                             </View>
+                             <Text style={{ color: '#555', fontSize: 10, marginTop: 5, fontWeight: 'bold' }}>Sen</Text>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity onPress={() => { setActiveModal(null); setActiveActionSheet('hygiene'); }} style={{ alignItems: 'center' }}>
+                             <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#2196F3', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
+                                <Text style={{ fontSize: 24 }}>🚿</Text>
+                             </View>
+                             <Text style={{ color: '#555', fontSize: 10, marginTop: 5, fontWeight: 'bold' }}>Umyj</Text>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity onPress={() => { setActiveModal(null); setActiveActionSheet('play'); }} style={{ alignItems: 'center' }}>
+                             <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#E91E63', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
+                                <Text style={{ fontSize: 24 }}>⚽</Text>
+                             </View>
+                             <Text style={{ color: '#555', fontSize: 10, marginTop: 5, fontWeight: 'bold' }}>Baw się</Text>
+                          </TouchableOpacity>
+                       </View>
+                     </View>
+                   ) : (
+                     <View style={{ width: '100%', paddingHorizontal: 10, gap: 15 }}>
+                       {/* Intelligence */}
+                       <View>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
+                            <Text style={{ fontWeight: 'bold', color: '#333', fontSize: 14 }}>Inteligencja</Text>
+                            <Text style={{ color: '#555', fontSize: 14 }}>{intelligence}/100</Text>
+                          </View>
+                          <View style={{ height: 20, backgroundColor: '#333', borderRadius: 10, overflow: 'hidden' }}>
+                            <View style={{ width: `${intelligence}%`, height: '100%', backgroundColor: '#9C27B0' }} />
+                          </View>
+                       </View>
+
+                       {/* Laziness */}
+                       <View>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
+                            <Text style={{ fontWeight: 'bold', color: '#333', fontSize: 14 }}>Lenistwo</Text>
+                            <Text style={{ color: '#555', fontSize: 14 }}>{laziness}/100</Text>
+                          </View>
+                          <View style={{ height: 20, backgroundColor: '#333', borderRadius: 10, overflow: 'hidden' }}>
+                            <View style={{ width: `${laziness}%`, height: '100%', backgroundColor: '#795548' }} />
+                          </View>
+                       </View>
+
+                       {/* Bond */}
+                       <View>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
+                            <Text style={{ fontWeight: 'bold', color: '#333', fontSize: 14 }}>Więź</Text>
+                            <Text style={{ color: '#555', fontSize: 14 }}>{bond}/100</Text>
+                          </View>
+                          <View style={{ height: 20, backgroundColor: '#333', borderRadius: 10, overflow: 'hidden' }}>
+                            <View style={{ width: `${bond}%`, height: '100%', backgroundColor: '#E91E63' }} />
+                          </View>
+                       </View>
+
+                       {/* Fitness */}
+                       <View>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
+                            <Text style={{ fontWeight: 'bold', color: '#333', fontSize: 14 }}>Kondycja</Text>
+                            <Text style={{ color: '#555', fontSize: 14 }}>{fitness}/100</Text>
+                          </View>
+                          <View style={{ height: 20, backgroundColor: '#333', borderRadius: 10, overflow: 'hidden' }}>
+                            <View style={{ width: `${fitness}%`, height: '100%', backgroundColor: '#4CAF50' }} />
+                          </View>
+                       </View>
+                     </View>
+                   )}
                  </View>
                ) : activeModal === 'Ustawienia' ? (
                  <View style={{ flex: 1, width: '100%' }}>
