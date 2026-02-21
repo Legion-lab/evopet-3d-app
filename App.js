@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, StyleSheet, Switch, Alert, Dimensions, PanResponder, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, StyleSheet, Switch, Alert, Dimensions, PanResponder, TouchableWithoutFeedback, Platform } from 'react-native';
 import { GLView } from 'expo-gl';
 import { Renderer } from 'expo-three';
 import * as THREE from 'three';
@@ -883,9 +883,10 @@ export default function App() {
 
       {/* Universal Modal */}
       {activeModal !== null && (
-         <View style={styles.modalOverlay}>
+         <View style={[styles.modalOverlay, activeModal === 'Czat' && { backgroundColor: 'transparent' }]}>
             <View style={[
               styles.modalContent,
+              activeModal === 'Czat' && { backgroundColor: 'transparent', width: '100%', height: '100%', padding: 0, elevation: 0, shadowOpacity: 0 },
               (activeModal === 'Ustawienia' || activeModal === 'Profil') && { backgroundColor: '#F2F2F7', width: '95%', height: '85%', padding: 20 }
             ]}>
                <Text style={{
@@ -904,38 +905,80 @@ export default function App() {
                </TouchableOpacity>
 
                {activeModal === 'Czat' ? (
-                 <KeyboardAvoidingView behavior="padding" style={{ width: '100%', height: 300 }}>
-                   <ScrollView
-                     style={{ flex: 1, marginBottom: 10 }}
-                     ref={scrollViewRef}
-                     onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+                 <>
+                   {/* Dimmer */}
+                   <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.3)' }} />
+
+                   {/* Bubble Display */}
+                   {(() => {
+                      const lastPetMessage = messages.slice().reverse().find(m => m.sender === 'pet');
+                      if (lastPetMessage) {
+                        return (
+                          <View style={{
+                            position: 'absolute',
+                            top: '25%',
+                            alignSelf: 'center',
+                            zIndex: 10,
+                            alignItems: 'center',
+                            width: '100%'
+                          }}>
+                            <View style={{
+                              backgroundColor: '#FFF',
+                              padding: 20,
+                              borderRadius: 20,
+                              maxWidth: '80%',
+                              elevation: 5
+                            }}>
+                              <Text style={{ fontSize: 18, color: '#000', textAlign: 'center' }}>{lastPetMessage.text}</Text>
+                            </View>
+                            {/* Tail */}
+                            <View style={{
+                              width: 0,
+                              height: 0,
+                              backgroundColor: 'transparent',
+                              borderStyle: 'solid',
+                              borderLeftWidth: 10,
+                              borderRightWidth: 10,
+                              borderBottomWidth: 0,
+                              borderTopWidth: 15,
+                              borderLeftColor: 'transparent',
+                              borderRightColor: 'transparent',
+                              borderTopColor: '#FFF',
+                              marginTop: -1
+                            }} />
+                          </View>
+                        );
+                      }
+                      return null;
+                   })()}
+
+                   {/* Input Area */}
+                   <KeyboardAvoidingView
+                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                     style={{
+                       position: 'absolute',
+                       bottom: 0,
+                       left: 0,
+                       right: 0,
+                       padding: 10,
+                       paddingBottom: 30, // Safe area
+                       backgroundColor: 'rgba(0,0,0,0.6)'
+                     }}
                    >
-                     {messages.map((msg, index) => (
-                       <View key={index} style={{
-                         alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
-                         backgroundColor: msg.sender === 'user' ? '#007AFF' : '#555',
-                         padding: 10,
-                         borderRadius: 10,
-                         marginVertical: 5,
-                         maxWidth: '80%'
-                       }}>
-                         <Text style={{ color: 'white' }}>{msg.text}</Text>
-                       </View>
-                     ))}
-                   </ScrollView>
-                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                     <TextInput
-                       style={{ flex: 1, backgroundColor: '#444', color: 'white', padding: 10, borderRadius: 5, marginRight: 10 }}
-                       value={inputText}
-                       onChangeText={setInputText}
-                       placeholder="Napisz coś..."
-                       placeholderTextColor="#aaa"
-                     />
-                     <TouchableOpacity onPress={handleSendMessage} style={{ backgroundColor: '#2196F3', padding: 10, borderRadius: 5 }}>
-                       <Text style={{ color: 'white', fontWeight: 'bold' }}>Wyślij</Text>
-                     </TouchableOpacity>
-                   </View>
-                 </KeyboardAvoidingView>
+                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                       <TextInput
+                         style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.9)', color: '#000', padding: 12, borderRadius: 20, marginRight: 10 }}
+                         value={inputText}
+                         onChangeText={setInputText}
+                         placeholder="Napisz do zwierzaka..."
+                         placeholderTextColor="#555"
+                       />
+                       <TouchableOpacity onPress={handleSendMessage} style={{ backgroundColor: '#2196F3', padding: 12, borderRadius: 20 }}>
+                         <Text style={{ color: 'white', fontWeight: 'bold' }}>Wyślij</Text>
+                       </TouchableOpacity>
+                     </View>
+                   </KeyboardAvoidingView>
+                 </>
                ) : activeModal === 'Sklep' ? (
                  <View style={{ height: 220, width: '100%', justifyContent: 'center' }}>
                    <View style={{ height: 160, width: '100%' }}>
@@ -1158,6 +1201,19 @@ export default function App() {
                           <View style={{ height: 20, backgroundColor: '#333', borderRadius: 10, overflow: 'hidden' }}>
                             <View style={{ width: `${hunger}%`, height: '100%', backgroundColor: '#FF5252' }} />
                           </View>
+                          <TouchableOpacity
+                             onPress={() => { setActiveModal(null); setIsFeedingMode(true); }}
+                             style={{
+                                alignItems: 'center',
+                                backgroundColor: '#FF5252',
+                                padding: 10,
+                                borderRadius: 20,
+                                marginTop: 10,
+                                elevation: 2
+                             }}
+                          >
+                             <Text style={{ color: 'white', fontWeight: 'bold' }}>🍖 NAKARM</Text>
+                          </TouchableOpacity>
                        </View>
 
                        {/* Energy */}
@@ -1416,26 +1472,6 @@ export default function App() {
       {!isFeedingMode && (
         <TouchableOpacity onPress={() => setActiveModal('Profil')} style={styles.centralButton}>
           <Text style={{ fontSize: 30 }}>🐾</Text>
-        </TouchableOpacity>
-      )}
-
-      {/* Cinematic Feeding Trigger Button */}
-      {!isFeedingMode && activeModal === null && (
-        <TouchableOpacity
-          style={{
-            position: 'absolute',
-            bottom: 110,
-            alignSelf: 'center',
-            backgroundColor: '#FF5252',
-            paddingVertical: 10,
-            paddingHorizontal: 20,
-            borderRadius: 20,
-            elevation: 5,
-            zIndex: 15
-          }}
-          onPress={() => setIsFeedingMode(true)}
-        >
-          <Text style={{color: 'white', fontWeight: 'bold'}}>🍖 NAKARM</Text>
         </TouchableOpacity>
       )}
 
