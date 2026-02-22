@@ -202,7 +202,7 @@ export default function App() {
   const [activeModal, setActiveModal] = useState(null);
   const [activeActionSheet, setActiveActionSheet] = useState(null);
   const [inspectedItem, setInspectedItem] = useState(null);
-  const [isFeedingMode, setIsFeedingMode] = useState(false);
+  const [actionMode, setActionMode] = useState(null); // 'feed', 'play', 'wash', 'sleep', null
 
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -225,6 +225,11 @@ export default function App() {
   const [isApiKeyVisible, setIsApiKeyVisible] = useState(false);
   const [activeBubble, setActiveBubble] = useState(null);
   const [showChatHistory, setShowChatHistory] = useState(false);
+
+  useEffect(() => {
+    if (isSleeping && actionMode !== 'sleep') setActionMode('sleep');
+    if (!isSleeping && actionMode === 'sleep') setActionMode(null);
+  }, [isSleeping]);
 
   useEffect(() => {
     gameOverRef.current = isGameOver;
@@ -587,6 +592,7 @@ export default function App() {
               setOnboardingStep(0);
               setIsFirstLaunch(true);
               setActiveModal(null);
+              setActionMode(null);
             } catch (e) {
               console.error("Failed to hard reset", e);
             }
@@ -654,8 +660,8 @@ export default function App() {
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => activeModal === null && !showHUD && !isFeedingMode,
-      onMoveShouldSetPanResponder: (evt, gestureState) => activeModal === null && !showHUD && !isFeedingMode && Math.abs(gestureState.dy) > 10,
+      onStartShouldSetPanResponder: () => activeModal === null && !showHUD && (actionMode === null || actionMode === 'feed' || actionMode === 'play'),
+      onMoveShouldSetPanResponder: (evt, gestureState) => activeModal === null && !showHUD && (actionMode === null || actionMode === 'feed' || actionMode === 'play') && Math.abs(gestureState.dy) > 10,
       onPanResponderRelease: (evt, gestureState) => {
         const { dx, dy } = gestureState;
 
@@ -852,14 +858,14 @@ export default function App() {
       </View>
 
       {/* Coins Display (Top Left) */}
-      {!isFeedingMode && (
+      {actionMode === null && (
         <View style={{ position: 'absolute', top: 40, left: 20, zIndex: 10 }}>
           <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#FFD700' }}>🪙 {coins}</Text>
         </View>
       )}
 
       {/* Right Side Vertical Navigation (No Stats Button) */}
-      {!isFeedingMode && (
+      {actionMode === null && (
       <View style={{
         position: 'absolute',
         right: 15,
@@ -939,8 +945,10 @@ export default function App() {
             <View style={[
               styles.modalContent,
               activeModal === 'Czat' && { backgroundColor: 'transparent', width: '100%', height: '100%', padding: 0, elevation: 0, shadowOpacity: 0 },
-              (activeModal === 'Ustawienia' || activeModal === 'Profil') && { backgroundColor: '#F2F2F7', width: '95%', height: '85%', padding: 20 }
+              (activeModal === 'Ustawienia' || activeModal === 'Profil') && { backgroundColor: '#F2F2F7', width: '95%', height: '85%', padding: 20 },
+              (activeModal === 'Sklep' || activeModal === 'Plecak') && { backgroundColor: 'transparent', width: '100%', height: '100%', padding: 0, elevation: 0, shadowOpacity: 0, justifyContent: 'flex-start' }
             ]}>
+               {!(activeModal === 'Sklep' || activeModal === 'Plecak') && (
                <Text style={{
                  color: (activeModal === 'Ustawienia' || activeModal === 'Profil') ? '#000' : 'white',
                  fontSize: 24,
@@ -949,6 +957,7 @@ export default function App() {
                }}>
                  {activeModal === 'Ustawienia' ? 'Ustawienia' : activeModal === 'Profil' ? 'Profil Pupila' : activeModal}
                </Text>
+               )}
                {activeModal === 'Czat' && (
                  <TouchableOpacity
                    onPress={() => setShowChatHistory(!showChatHistory)}
@@ -1076,12 +1085,13 @@ export default function App() {
                    </KeyboardAvoidingView>
                  </>
                ) : activeModal === 'Sklep' ? (
-                 <View style={{ width: '100%', height: '90%' }}>
+                 <View style={{ width: '92%', maxHeight: '80%', backgroundColor: '#F8F9FA', borderRadius: 25, padding: 20, alignSelf: 'center', marginTop: '15%', elevation: 10, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 10 }}>
+                   <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center', color: '#000' }}>Sklep</Text>
                    {/* Tabs */}
                    <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginBottom: 10 }}>
                      {['Spiżarnia', 'Eliksiry', 'Akcesoria', 'Wnętrza'].map(tab => (
-                       <TouchableOpacity key={tab} onPress={() => setShopTab(tab)} style={{ padding: 8, borderBottomWidth: shopTab === tab ? 2 : 0, borderColor: '#FFF' }}>
-                         <Text style={{ color: shopTab === tab ? '#FFF' : '#AAA', fontWeight: 'bold' }}>{tab}</Text>
+                       <TouchableOpacity key={tab} onPress={() => setShopTab(tab)} style={{ padding: 8, borderBottomWidth: shopTab === tab ? 2 : 0, borderColor: '#000' }}>
+                         <Text style={{ color: shopTab === tab ? '#000' : '#AAA', fontWeight: 'bold' }}>{tab}</Text>
                        </TouchableOpacity>
                      ))}
                    </View>
@@ -1141,12 +1151,13 @@ export default function App() {
                    )}
                  </View>
                ) : activeModal === 'Plecak' ? (
-                 <View style={{ width: '100%', height: '90%' }}>
+                 <View style={{ width: '92%', maxHeight: '80%', backgroundColor: '#F8F9FA', borderRadius: 25, padding: 20, alignSelf: 'center', marginTop: '15%', elevation: 10, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 10 }}>
+                   <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center', color: '#000' }}>Plecak</Text>
                    {/* Tabs */}
                    <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginBottom: 10 }}>
                      {['Spiżarnia', 'Eliksiry', 'Akcesoria', 'Wnętrza'].map(tab => (
-                       <TouchableOpacity key={tab} onPress={() => setInventoryTab(tab)} style={{ padding: 8, borderBottomWidth: inventoryTab === tab ? 2 : 0, borderColor: '#FFF' }}>
-                         <Text style={{ color: inventoryTab === tab ? '#FFF' : '#AAA', fontWeight: 'bold' }}>{tab}</Text>
+                       <TouchableOpacity key={tab} onPress={() => setInventoryTab(tab)} style={{ padding: 8, borderBottomWidth: inventoryTab === tab ? 2 : 0, borderColor: '#000' }}>
+                         <Text style={{ color: inventoryTab === tab ? '#000' : '#AAA', fontWeight: 'bold' }}>{tab}</Text>
                        </TouchableOpacity>
                      ))}
                    </View>
@@ -1254,7 +1265,7 @@ export default function App() {
                           <TouchableOpacity onPress={() => {
                              if (isSleeping) { Alert.alert('Ciii...', 'Bobas teraz śpi. Zostaw go w spokoju!'); return; }
                              setActiveModal(null);
-                             setIsFeedingMode(true);
+                             setActionMode('feed');
                           }} style={{ alignItems: 'center' }}>
                              <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#FF5252', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
                                 <Text style={{ fontSize: 24 }}>🍖</Text>
@@ -1262,7 +1273,11 @@ export default function App() {
                              <Text style={{ color: '#555', fontSize: 10, marginTop: 5, fontWeight: 'bold' }}>Nakarm</Text>
                           </TouchableOpacity>
 
-                          <TouchableOpacity onPress={() => { setActiveModal(null); setActiveActionSheet('energy'); }} style={{ alignItems: 'center' }}>
+                          <TouchableOpacity onPress={() => {
+                             setActiveModal(null);
+                             setActionMode('sleep');
+                             setIsSleeping(true);
+                          }} style={{ alignItems: 'center' }}>
                              <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#FFD700', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
                                 <Text style={{ fontSize: 24 }}>⚡</Text>
                              </View>
@@ -1272,7 +1287,7 @@ export default function App() {
                           <TouchableOpacity onPress={() => {
                              if (isSleeping) { Alert.alert('Ciii...', 'Bobas teraz śpi. Zostaw go w spokoju!'); return; }
                              setActiveModal(null);
-                             setActiveActionSheet('hygiene');
+                             setActionMode('wash');
                           }} style={{ alignItems: 'center' }}>
                              <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#2196F3', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
                                 <Text style={{ fontSize: 24 }}>🚿</Text>
@@ -1283,7 +1298,7 @@ export default function App() {
                           <TouchableOpacity onPress={() => {
                              if (isSleeping) { Alert.alert('Ciii...', 'Bobas teraz śpi. Zostaw go w spokoju!'); return; }
                              setActiveModal(null);
-                             setActiveActionSheet('play');
+                             setActionMode('play');
                           }} style={{ alignItems: 'center' }}>
                              <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#E91E63', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
                                 <Text style={{ fontSize: 24 }}>⚽</Text>
@@ -1489,28 +1504,28 @@ export default function App() {
       )}
 
       {/* Central Button */}
-      {!isFeedingMode && (
+      {actionMode === null && (
         <TouchableOpacity onPress={() => setActiveModal(activeModal === 'Profil' ? null : 'Profil')} style={styles.centralButton}>
           <Text style={{ fontSize: 30 }}>🐾</Text>
         </TouchableOpacity>
       )}
 
-      {/* Cinematic Food Carousel */}
-      {isFeedingMode && (
+      {/* Cinematic Action UI (Feed, Play, Wash) */}
+      {(actionMode === 'feed' || actionMode === 'play' || actionMode === 'wash') && (
          <View style={{
            position: 'absolute',
            bottom: 0,
            left: 0,
            right: 0,
-           height: 160, // Increased height for better tile spacing
-           backgroundColor: 'rgba(0,0,0,0.9)', // Slightly darker for better contrast
+           height: 160,
+           backgroundColor: 'rgba(0,0,0,0.9)',
            flexDirection: 'row',
            alignItems: 'center',
            zIndex: 20,
-           paddingBottom: 20 // for safe area
+           paddingBottom: 20
          }}>
            <TouchableOpacity
-             onPress={() => setIsFeedingMode(false)}
+             onPress={() => setActionMode(null)}
              style={{
                width: 40, height: 40, backgroundColor: 'rgba(255,255,255,0.2)',
                borderRadius: 20, justifyContent: 'center', alignItems: 'center',
@@ -1521,43 +1536,98 @@ export default function App() {
               <Text style={{fontSize: 18, color: 'white'}}>X</Text>
            </TouchableOpacity>
 
-           <ScrollView
-             horizontal
-             showsHorizontalScrollIndicator={false}
-             style={{ flex: 1 }}
-             contentContainerStyle={{ paddingHorizontal: 10, alignItems: 'center' }}
-           >
-             {[
-               { id: 'free_snack', name: 'Darmowa Chrupka', icon: '🦴', quantity: '∞' },
-               ...SHOP_ITEMS.filter(item => item.category === 'Spiżarnia' && inventory[item.id] > 0).map(item => ({ ...item, quantity: inventory[item.id] }))
-             ].map((item) => (
-                 <TouchableOpacity
-                   key={item.id}
-                   style={{
-                     width: 100,
-                     height: 120,
-                     marginHorizontal: 8,
-                     backgroundColor: '#333',
-                     borderRadius: 15,
-                     justifyContent: 'space-between',
-                     alignItems: 'center',
-                     padding: 10,
-                     borderWidth: 1,
-                     borderColor: 'rgba(255,255,255,0.2)',
-                     elevation: 5
-                   }}
-                   onPress={() => {
-                      setEquippedFood(item.id);
-                      // setIsFeedingMode(false);
-                   }}
-                 >
-                   <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold', textAlign: 'center' }}>{item.name}</Text>
-                   <Text style={{ fontSize: 40 }}>{item.icon}</Text>
-                   <Text style={{ color: '#aaa', fontSize: 10, fontWeight: 'bold' }}>{item.id === 'free_snack' ? '∞' : `x${item.quantity}`}</Text>
-                 </TouchableOpacity>
-             ))}
-           </ScrollView>
+           {actionMode === 'wash' ? (
+             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+               <TouchableOpacity
+                 onPress={() => {
+                    setHygiene(prev => Math.min(prev + 50, 100));
+                    Alert.alert('Sukces', 'Umyto Bobasa! (+50 Higieny)');
+                 }}
+                 style={{
+                   backgroundColor: '#2196F3',
+                   paddingVertical: 15,
+                   paddingHorizontal: 40,
+                   borderRadius: 30,
+                   elevation: 5,
+                   flexDirection: 'row',
+                   alignItems: 'center',
+                   gap: 10
+                 }}
+               >
+                 <Text style={{ fontSize: 24 }}>🧽</Text>
+                 <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>Szoruj (+50% Higieny)</Text>
+               </TouchableOpacity>
+             </View>
+           ) : (
+             <ScrollView
+               horizontal
+               showsHorizontalScrollIndicator={false}
+               style={{ flex: 1 }}
+               contentContainerStyle={{ paddingHorizontal: 10, alignItems: 'center' }}
+             >
+               {/* Feed Items */}
+               {actionMode === 'feed' && [
+                 { id: 'free_snack', name: 'Darmowa Chrupka', icon: '🦴', quantity: '∞' },
+                 ...SHOP_ITEMS.filter(item => item.category === 'Spiżarnia' && inventory[item.id] > 0).map(item => ({ ...item, quantity: inventory[item.id] }))
+               ].map((item) => (
+                   <TouchableOpacity
+                     key={item.id}
+                     style={{
+                       width: 100, height: 120, marginHorizontal: 8, backgroundColor: '#333', borderRadius: 15,
+                       justifyContent: 'space-between', alignItems: 'center', padding: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', elevation: 5
+                     }}
+                     onPress={() => setEquippedFood(item.id)}
+                   >
+                     <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold', textAlign: 'center' }}>{item.name}</Text>
+                     <Text style={{ fontSize: 40 }}>{item.icon}</Text>
+                     <Text style={{ color: '#aaa', fontSize: 10, fontWeight: 'bold' }}>{item.id === 'free_snack' ? '∞' : `x${item.quantity}`}</Text>
+                   </TouchableOpacity>
+               ))}
+
+               {/* Play Items */}
+               {actionMode === 'play' && SHOP_ITEMS.filter(item => item.category === 'Akcesoria' && inventory[item.id] > 0).map(item => ({ ...item, quantity: inventory[item.id] })).map((item) => (
+                   <TouchableOpacity
+                     key={item.id}
+                     style={{
+                       width: 100, height: 120, marginHorizontal: 8, backgroundColor: '#333', borderRadius: 15,
+                       justifyContent: 'space-between', alignItems: 'center', padding: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', elevation: 5
+                     }}
+                     onPress={() => setEquippedFood(item.id)}
+                   >
+                     <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold', textAlign: 'center' }}>{item.name}</Text>
+                     <View>{renderIcon(item.icon)}</View>
+                     <Text style={{ color: '#aaa', fontSize: 10, fontWeight: 'bold' }}>x{item.quantity}</Text>
+                   </TouchableOpacity>
+               ))}
+               {actionMode === 'play' && SHOP_ITEMS.filter(item => item.category === 'Akcesoria' && inventory[item.id] > 0).length === 0 && (
+                  <View style={{ width: 200, alignItems: 'center' }}>
+                     <Text style={{ color: '#AAA' }}>Brak zabawek w plecaku...</Text>
+                  </View>
+               )}
+             </ScrollView>
+           )}
          </View>
+      )}
+
+      {/* Sleep Mode Overlay */}
+      {actionMode === 'sleep' && (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,20,0.5)', zIndex: 100, justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 50 }}>
+          <TouchableOpacity
+            onPress={() => {
+               setActionMode(null);
+               setIsSleeping(false);
+            }}
+            style={{
+               backgroundColor: '#FFD700',
+               paddingVertical: 15,
+               paddingHorizontal: 40,
+               borderRadius: 30,
+               elevation: 10
+            }}
+          >
+             <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }}>☀️ Obudź</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {/* Action Sheet */}
