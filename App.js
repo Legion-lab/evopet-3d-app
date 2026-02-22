@@ -1201,19 +1201,6 @@ export default function App() {
                           <View style={{ height: 20, backgroundColor: '#333', borderRadius: 10, overflow: 'hidden' }}>
                             <View style={{ width: `${hunger}%`, height: '100%', backgroundColor: '#FF5252' }} />
                           </View>
-                          <TouchableOpacity
-                             onPress={() => { setActiveModal(null); setIsFeedingMode(true); }}
-                             style={{
-                                alignItems: 'center',
-                                backgroundColor: '#FF5252',
-                                padding: 10,
-                                borderRadius: 20,
-                                marginTop: 10,
-                                elevation: 2
-                             }}
-                          >
-                             <Text style={{ color: 'white', fontWeight: 'bold' }}>🍖 NAKARM</Text>
-                          </TouchableOpacity>
                        </View>
 
                        {/* Energy */}
@@ -1251,7 +1238,7 @@ export default function App() {
 
                        {/* Action Buttons (Restored for Playability) */}
                        <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 20 }}>
-                          <TouchableOpacity onPress={() => { setActiveModal(null); setActiveActionSheet('food'); }} style={{ alignItems: 'center' }}>
+                          <TouchableOpacity onPress={() => { setActiveModal(null); setIsFeedingMode(true); }} style={{ alignItems: 'center' }}>
                              <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#FF5252', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
                                 <Text style={{ fontSize: 24 }}>🍖</Text>
                              </View>
