@@ -8,6 +8,24 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
+const SHOP_ITEMS = [
+  { id: 'jablko', name: 'Witaminowe Jabłko', price: 20, category: 'Spiżarnia', icon: '🍎', stats: 'Głód +20, Kondycja +5' },
+  { id: 'pizza', name: 'Cyber-Pizza', price: 50, category: 'Spiżarnia', icon: '🍕', stats: 'Głód +50, Lenistwo +15' },
+  { id: 'sushi', name: 'Sushi Premium', price: 100, category: 'Spiżarnia', icon: '🍣', stats: 'Głód +40, Inteligencja +10' },
+  { id: 'eliksir_wiedzy', name: 'Eliksir Skupienia', price: 150, category: 'Eliksiry', icon: '🧪', stats: 'Inteligencja +20' },
+  { id: 'kawa', name: 'Mocna Kawa', price: 30, category: 'Eliksiry', icon: '☕', stats: 'Energia +40, Kondycja -5' },
+  { id: 'pilka', name: 'Piłka do skakania', price: 80, category: 'Akcesoria', icon: '⚽', stats: 'Kondycja +15, Więź +5' },
+  { id: 'ksiazka', name: 'Mądra Książka', price: 120, category: 'Akcesoria', icon: '📚', stats: 'Inteligencja +25' },
+  { id: 'dywan', name: 'Puchaty Dywan', price: 300, category: 'Wnętrza', icon: 'rug', stats: 'Zwiększa regenerację w trakcie snu' }
+];
+
+const renderIcon = (icon) => {
+  if (icon === 'rug') {
+    return <MaterialCommunityIcons name="rug" size={50} color="#FFF" />;
+  }
+  return <Text style={{ fontSize: 50 }}>{icon}</Text>;
+};
+
 const callPetAI = async (userMessage, contextData, key, provider, isSleeping) => {
   if (isSleeping) { return { reply: "zzZZzzzZZzz...", action: "none" }; }
   if (!key || key.trim() === '') {
@@ -126,7 +144,12 @@ export default function App() {
   const [hygiene, setHygiene] = useState(80);
   const [happiness, setHappiness] = useState(80);
   const [coins, setCoins] = useState(50);
-  const [inventory, setInventory] = useState({ snack: 0, dinner: 0, coffee: 0, hungerBuster: 0, energyBuster: 0 });
+  const [inventory, setInventory] = useState({
+    snack: 0, dinner: 0, coffee: 0, hungerBuster: 0, energyBuster: 0,
+    jablko: 0, pizza: 0, sushi: 0, eliksir_wiedzy: 0, pilka: 0, ksiazka: 0, dywan: 0
+  });
+  const [shopTab, setShopTab] = useState('Spiżarnia');
+  const [inventoryTab, setInventoryTab] = useState('Spiżarnia');
   const [equippedFood, setEquippedFood] = useState(null);
   const equippedFoodRef = useRef(null);
 
@@ -229,6 +252,13 @@ export default function App() {
           if (inventory === undefined) inventory = { snack: 0, dinner: 0, coffee: 0, hungerBuster: 0, energyBuster: 0 };
           if (inventory.hungerBuster === undefined) inventory.hungerBuster = 0;
           if (inventory.energyBuster === undefined) inventory.energyBuster = 0;
+          if (inventory.jablko === undefined) inventory.jablko = 0;
+          if (inventory.pizza === undefined) inventory.pizza = 0;
+          if (inventory.sushi === undefined) inventory.sushi = 0;
+          if (inventory.eliksir_wiedzy === undefined) inventory.eliksir_wiedzy = 0;
+          if (inventory.pilka === undefined) inventory.pilka = 0;
+          if (inventory.ksiazka === undefined) inventory.ksiazka = 0;
+          if (inventory.dywan === undefined) inventory.dywan = 0;
           if (hungerBuffUntil === undefined) hungerBuffUntil = 0;
           if (energyBuffUntil === undefined) energyBuffUntil = 0;
 
@@ -348,8 +378,9 @@ export default function App() {
       const isEnergyProtected = now <= energyBuffUntil;
 
       if (isSleeping) {
-        // Sleep Mode: Energy +2, others -0.5
-        setEnergy((prev) => Math.min(prev + 2, 100));
+        // Sleep Mode: Energy +2 (plus Dywan bonus), others -0.5
+        const energyRegen = 2 + (inventory.dywan > 0 ? 1 : 0);
+        setEnergy((prev) => Math.min(prev + energyRegen, 100));
         if (!isHungerProtected) setHunger((prev) => Math.max(prev - 0.5, 0));
         setHygiene((prev) => Math.max(prev - 0.5, 0));
         setHappiness((prev) => Math.max(prev - 0.5, 0));
@@ -511,11 +542,11 @@ export default function App() {
     setLaziness(0);
     setBond(0);
     setFitness(0);
-    setInventory({ snack: 0, dinner: 0, coffee: 0 });
+    setInventory({ snack: 0, dinner: 0, coffee: 0, hungerBuster: 0, energyBuster: 0, jablko: 0, pizza: 0, sushi: 0, eliksir_wiedzy: 0, pilka: 0, ksiazka: 0, dywan: 0 });
     setIsGameOver(false);
 
     try {
-      const data = { hunger: 80, energy: 80, hygiene: 80, happiness: 80, roomHygiene: 100, strength: 0, intelligence: 0, laziness: 0, bond: 0, fitness: 0, inventory: { snack: 0, dinner: 0, coffee: 0 }, lastSavedTime: Date.now() };
+      const data = { hunger: 80, energy: 80, hygiene: 80, happiness: 80, roomHygiene: 100, strength: 0, intelligence: 0, laziness: 0, bond: 0, fitness: 0, inventory: { snack: 0, dinner: 0, coffee: 0, hungerBuster: 0, energyBuster: 0, jablko: 0, pizza: 0, sushi: 0, eliksir_wiedzy: 0, pilka: 0, ksiazka: 0, dywan: 0 }, lastSavedTime: Date.now() };
       await AsyncStorage.setItem('@pet_stats', JSON.stringify(data));
     } catch (e) {
       console.error("Failed to reset state", e);
@@ -540,7 +571,7 @@ export default function App() {
               setHappiness(80);
               setRoomHygiene(100);
               setCoins(50);
-              setInventory({ snack: 0, dinner: 0, coffee: 0, hungerBuster: 0, energyBuster: 0 });
+              setInventory({ snack: 0, dinner: 0, coffee: 0, hungerBuster: 0, energyBuster: 0, jablko: 0, pizza: 0, sushi: 0, eliksir_wiedzy: 0, pilka: 0, ksiazka: 0, dywan: 0 });
               setHungerBuffUntil(0);
               setEnergyBuffUntil(0);
               setStrength(0);
@@ -640,7 +671,9 @@ export default function App() {
            const item = equippedFoodRef.current;
 
            // Decrease inventory
-           setInventory(prev => ({ ...prev, [item]: Math.max(0, prev[item] - 1) }));
+           if (item !== 'free_snack') {
+              setInventory(prev => ({ ...prev, [item]: Math.max(0, prev[item] - 1) }));
+           }
 
            // Activate Physics
            isFoodFlyingRef.current = true;
@@ -776,12 +809,23 @@ export default function App() {
             setHappiness((prev) => Math.min(prev + 10, 100));
 
             // Apply specific item effects
-            if (thrownItemRef.current === 'snack') {
-               setHunger((prev) => Math.min(prev + 20, 100)); // Snack value
-               setInventory((prev) => ({ ...prev, snack: Math.max(0, prev.snack - 1) }));
-            } else if (thrownItemRef.current === 'dinner') {
-               setHunger((prev) => Math.min(prev + 50, 100)); // Dinner value
-               setInventory((prev) => ({ ...prev, dinner: Math.max(0, prev.dinner - 1) }));
+            const itemID = thrownItemRef.current;
+            if (itemID === 'free_snack') {
+               setHunger((prev) => Math.min(prev + 5, 100));
+               setHappiness((prev) => Math.min(prev + 5, 100));
+            } else if (itemID === 'snack') {
+               setHunger((prev) => Math.min(prev + 20, 100));
+            } else if (itemID === 'dinner') {
+               setHunger((prev) => Math.min(prev + 50, 100));
+            } else if (itemID === 'jablko') {
+               setHunger((prev) => Math.min(prev + 20, 100));
+               setFitness((prev) => prev + 5);
+            } else if (itemID === 'pizza') {
+               setHunger((prev) => Math.min(prev + 50, 100));
+               setLaziness((prev) => prev + 15);
+            } else if (itemID === 'sushi') {
+               setHunger((prev) => Math.min(prev + 40, 100));
+               setIntelligence((prev) => prev + 10);
             }
 
           } else if (foodMeshRef.current.position.y < -5) {
@@ -1032,31 +1076,19 @@ export default function App() {
                    </KeyboardAvoidingView>
                  </>
                ) : activeModal === 'Sklep' ? (
-                 <View style={{ height: 220, width: '100%', justifyContent: 'center' }}>
+                 <View style={{ width: '100%', height: '90%' }}>
+                   {/* Tabs */}
+                   <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginBottom: 10 }}>
+                     {['Spiżarnia', 'Eliksiry', 'Akcesoria', 'Wnętrza'].map(tab => (
+                       <TouchableOpacity key={tab} onPress={() => setShopTab(tab)} style={{ padding: 8, borderBottomWidth: shopTab === tab ? 2 : 0, borderColor: '#FFF' }}>
+                         <Text style={{ color: shopTab === tab ? '#FFF' : '#AAA', fontWeight: 'bold' }}>{tab}</Text>
+                       </TouchableOpacity>
+                     ))}
+                   </View>
+
                    <View style={{ height: 200, width: '100%' }}>
                      <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 20 }}>
-                       {[
-                         {
-                           id: 'snack', name: 'Przekąska', price: 5, stats: 'Głód +20', icon: '🍎',
-                           action: () => { setCoins(prev => prev - 5); setInventory(prev => ({ ...prev, snack: prev.snack + 1 })); }
-                         },
-                         {
-                           id: 'dinner', name: 'Pełny Obiad', price: 10, stats: 'Głód +50', icon: '🍱',
-                           action: () => { setCoins(prev => prev - 10); setInventory(prev => ({ ...prev, dinner: prev.dinner + 1 })); }
-                         },
-                         {
-                           id: 'coffee', name: 'Kawa', price: 15, stats: 'Energia +40', icon: '☕',
-                           action: () => { setCoins(prev => prev - 15); setInventory(prev => ({ ...prev, coffee: prev.coffee + 1 })); }
-                         },
-                         {
-                           id: 'hungerBuster', name: 'Buster Głodu', price: 50, stats: 'Głód 100%, Ochrona 12h', icon: '🛡️',
-                           action: () => { setCoins(prev => prev - 50); setInventory(prev => ({ ...prev, hungerBuster: prev.hungerBuster + 1 })); }
-                         },
-                         {
-                           id: 'energyBuster', name: 'Buster Energii', price: 50, stats: 'Energia 100%, Ochrona 12h', icon: '⚡',
-                           action: () => { setCoins(prev => prev - 50); setInventory(prev => ({ ...prev, energyBuster: prev.energyBuster + 1 })); }
-                         }
-                       ].map((item) => (
+                       {SHOP_ITEMS.filter(item => item.category === shopTab).map((item) => (
                          <TouchableOpacity
                            key={item.id}
                            delayPressIn={150}
@@ -1064,7 +1096,7 @@ export default function App() {
                            onPress={() => setInspectedItem(item)}
                          >
                            <Text style={{ color: 'black', fontSize: 12, textAlign: 'center', fontWeight: 'bold' }}>{item.name}</Text>
-                           <Text style={{ fontSize: 50 }}>{item.icon}</Text>
+                           <View>{renderIcon(item.icon)}</View>
                            <View
                              style={{ backgroundColor: '#4CAF50', padding: 8, borderRadius: 5, width: '100%', alignItems: 'center' }}
                            >
@@ -1077,7 +1109,7 @@ export default function App() {
                    {inspectedItem && (
                      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', zIndex: 100, borderRadius: 20 }}>
                        <View style={{ backgroundColor: 'white', padding: 25, borderRadius: 20, width: '80%', alignItems: 'center', elevation: 10 }}>
-                         <Text style={{ fontSize: 60, marginBottom: 15 }}>{inspectedItem.icon}</Text>
+                         <View style={{ marginBottom: 15 }}>{renderIcon(inspectedItem.icon)}</View>
                          <Text style={{ fontSize: 24, fontWeight: 'bold', color: 'black', marginBottom: 5, textAlign: 'center' }}>{inspectedItem.name}</Text>
                          <Text style={{ fontSize: 16, color: '#555', marginBottom: 20, textAlign: 'center' }}>Wpływ: {inspectedItem.stats}</Text>
 
@@ -1085,8 +1117,12 @@ export default function App() {
                            style={{ backgroundColor: coins >= inspectedItem.price ? '#2196F3' : '#999', paddingVertical: 12, paddingHorizontal: 30, borderRadius: 10, marginBottom: 10, width: '100%', alignItems: 'center' }}
                            disabled={coins < inspectedItem.price}
                            onPress={() => {
-                             inspectedItem.action();
-                             setInspectedItem(null);
+                             if (coins >= inspectedItem.price) {
+                                setCoins(prev => prev - inspectedItem.price);
+                                setInventory(prev => ({ ...prev, [inspectedItem.id]: (prev[inspectedItem.id] || 0) + 1 }));
+                                setInspectedItem(null);
+                                Alert.alert('Sukces', `Kupiono ${inspectedItem.name}!`);
+                             }
                            }}
                          >
                            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
@@ -1105,38 +1141,30 @@ export default function App() {
                    )}
                  </View>
                ) : activeModal === 'Plecak' ? (
-                 <View style={{ height: 220, width: '100%', justifyContent: 'center' }}>
+                 <View style={{ width: '100%', height: '90%' }}>
+                   {/* Tabs */}
+                   <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginBottom: 10 }}>
+                     {['Spiżarnia', 'Eliksiry', 'Akcesoria', 'Wnętrza'].map(tab => (
+                       <TouchableOpacity key={tab} onPress={() => setInventoryTab(tab)} style={{ padding: 8, borderBottomWidth: inventoryTab === tab ? 2 : 0, borderColor: '#FFF' }}>
+                         <Text style={{ color: inventoryTab === tab ? '#FFF' : '#AAA', fontWeight: 'bold' }}>{tab}</Text>
+                       </TouchableOpacity>
+                     ))}
+                   </View>
+
                    <View style={{ height: 200, width: '100%' }}>
                      <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 20 }}>
-                       <TouchableOpacity delayPressIn={100} style={{ width: 130, height: 170, marginHorizontal: 10, borderRadius: 15, backgroundColor: '#FFF', elevation: 4, padding: 10, alignItems: 'center', justifyContent: 'space-between' }}>
-                         <Text style={{ color: 'black', fontSize: 12, textAlign: 'center', fontWeight: 'bold' }}>Przekąska</Text>
-                         <Text style={{ fontSize: 50 }}>🍎</Text>
-                         <Text style={{ color: '#555', fontWeight: 'bold' }}>Posiadasz: {inventory.snack}</Text>
-                       </TouchableOpacity>
-
-                       <TouchableOpacity delayPressIn={100} style={{ width: 130, height: 170, marginHorizontal: 10, borderRadius: 15, backgroundColor: '#FFF', elevation: 4, padding: 10, alignItems: 'center', justifyContent: 'space-between' }}>
-                         <Text style={{ color: 'black', fontSize: 12, textAlign: 'center', fontWeight: 'bold' }}>Obiad</Text>
-                         <Text style={{ fontSize: 50 }}>🍱</Text>
-                         <Text style={{ color: '#555', fontWeight: 'bold' }}>Posiadasz: {inventory.dinner}</Text>
-                       </TouchableOpacity>
-
-                       <TouchableOpacity delayPressIn={100} style={{ width: 130, height: 170, marginHorizontal: 10, borderRadius: 15, backgroundColor: '#FFF', elevation: 4, padding: 10, alignItems: 'center', justifyContent: 'space-between' }}>
-                         <Text style={{ color: 'black', fontSize: 12, textAlign: 'center', fontWeight: 'bold' }}>Kawa</Text>
-                         <Text style={{ fontSize: 50 }}>☕</Text>
-                         <Text style={{ color: '#555', fontWeight: 'bold' }}>Posiadasz: {inventory.coffee}</Text>
-                       </TouchableOpacity>
-
-                       <TouchableOpacity delayPressIn={100} style={{ width: 130, height: 170, marginHorizontal: 10, borderRadius: 15, backgroundColor: '#FFF', elevation: 4, padding: 10, alignItems: 'center', justifyContent: 'space-between' }}>
-                         <Text style={{ color: 'black', fontSize: 12, textAlign: 'center', fontWeight: 'bold' }}>Buster Głodu 12h</Text>
-                         <Text style={{ fontSize: 50 }}>🛡️</Text>
-                         <Text style={{ color: '#555', fontWeight: 'bold' }}>Posiadasz: {inventory.hungerBuster}</Text>
-                       </TouchableOpacity>
-
-                       <TouchableOpacity delayPressIn={100} style={{ width: 130, height: 170, marginHorizontal: 10, borderRadius: 15, backgroundColor: '#FFF', elevation: 4, padding: 10, alignItems: 'center', justifyContent: 'space-between' }}>
-                         <Text style={{ color: 'black', fontSize: 12, textAlign: 'center', fontWeight: 'bold' }}>Buster Energii 12h</Text>
-                         <Text style={{ fontSize: 50 }}>⚡</Text>
-                         <Text style={{ color: '#555', fontWeight: 'bold' }}>Posiadasz: {inventory.energyBuster}</Text>
-                       </TouchableOpacity>
+                       {SHOP_ITEMS.filter(item => item.category === inventoryTab && inventory[item.id] > 0).map((item) => (
+                         <TouchableOpacity key={item.id} delayPressIn={100} style={{ width: 130, height: 170, marginHorizontal: 10, borderRadius: 15, backgroundColor: '#FFF', elevation: 4, padding: 10, alignItems: 'center', justifyContent: 'space-between' }}>
+                           <Text style={{ color: 'black', fontSize: 12, textAlign: 'center', fontWeight: 'bold' }}>{item.name}</Text>
+                           <View>{renderIcon(item.icon)}</View>
+                           <Text style={{ color: '#555', fontWeight: 'bold' }}>Posiadasz: {inventory[item.id]}</Text>
+                         </TouchableOpacity>
+                       ))}
+                       {SHOP_ITEMS.filter(item => item.category === inventoryTab && inventory[item.id] > 0).length === 0 && (
+                          <View style={{ width: width - 80, alignItems: 'center', justifyContent: 'center' }}>
+                             <Text style={{ color: '#AAA' }}>Pusto w tej kategorii...</Text>
+                          </View>
+                       )}
                      </ScrollView>
                    </View>
                  </View>
@@ -1223,7 +1251,11 @@ export default function App() {
 
                        {/* Action Buttons (Restored for Playability) */}
                        <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 20 }}>
-                          <TouchableOpacity onPress={() => { setActiveModal(null); setIsFeedingMode(true); }} style={{ alignItems: 'center' }}>
+                          <TouchableOpacity onPress={() => {
+                             if (isSleeping) { Alert.alert('Ciii...', 'Bobas teraz śpi. Zostaw go w spokoju!'); return; }
+                             setActiveModal(null);
+                             setIsFeedingMode(true);
+                          }} style={{ alignItems: 'center' }}>
                              <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#FF5252', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
                                 <Text style={{ fontSize: 24 }}>🍖</Text>
                              </View>
@@ -1496,10 +1528,9 @@ export default function App() {
              contentContainerStyle={{ paddingHorizontal: 10, alignItems: 'center' }}
            >
              {[
-               { id: 'snack', name: 'Przekąska', icon: '🍎' },
-               { id: 'dinner', name: 'Obiad', icon: '🍱' }
+               { id: 'free_snack', name: 'Darmowa Chrupka', icon: '🦴', quantity: '∞' },
+               ...SHOP_ITEMS.filter(item => item.category === 'Spiżarnia' && inventory[item.id] > 0).map(item => ({ ...item, quantity: inventory[item.id] }))
              ].map((item) => (
-               inventory[item.id] > 0 && (
                  <TouchableOpacity
                    key={item.id}
                    style={{
@@ -1517,14 +1548,13 @@ export default function App() {
                    }}
                    onPress={() => {
                       setEquippedFood(item.id);
-                      setIsFeedingMode(false);
+                      // setIsFeedingMode(false);
                    }}
                  >
                    <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold', textAlign: 'center' }}>{item.name}</Text>
                    <Text style={{ fontSize: 40 }}>{item.icon}</Text>
-                   <Text style={{ color: '#aaa', fontSize: 10, fontWeight: 'bold' }}>x{inventory[item.id]}</Text>
+                   <Text style={{ color: '#aaa', fontSize: 10, fontWeight: 'bold' }}>{item.id === 'free_snack' ? '∞' : `x${item.quantity}`}</Text>
                  </TouchableOpacity>
-               )
              ))}
            </ScrollView>
          </View>
@@ -1670,7 +1700,7 @@ export default function App() {
                 <TouchableOpacity
                   style={styles.tile}
                   onPress={() => {
-                    setHygiene(prev => Math.min(prev + 30, 100));
+                    setHygiene(prev => Math.min(prev + 50, 100));
                     setActiveActionSheet(null);
                   }}
                 >
@@ -1678,7 +1708,7 @@ export default function App() {
                   <Text style={styles.tileIcon}>🛁</Text>
                   <Text style={styles.tileSubLabel}>Darmowe</Text>
                   <View style={[styles.tileButton, { backgroundColor: '#03A9F4' }]}>
-                    <Text style={styles.tileButtonText}>Umyj (+30)</Text>
+                    <Text style={styles.tileButtonText}>Umyj (+50)</Text>
                   </View>
                 </TouchableOpacity>
 
