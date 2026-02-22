@@ -946,7 +946,7 @@ export default function App() {
               styles.modalContent,
               activeModal === 'Czat' && { backgroundColor: 'transparent', width: '100%', height: '100%', padding: 0, elevation: 0, shadowOpacity: 0 },
               (activeModal === 'Ustawienia' || activeModal === 'Profil') && { backgroundColor: '#F2F2F7', width: '95%', height: '85%', padding: 20 },
-              (activeModal === 'Sklep' || activeModal === 'Plecak') && { backgroundColor: 'transparent', width: '100%', height: '100%', padding: 0, elevation: 0, shadowOpacity: 0, justifyContent: 'flex-start' }
+              (activeModal === 'Sklep' || activeModal === 'Plecak') && { backgroundColor: 'transparent', width: '100%', height: '100%', padding: 0, elevation: 0, shadowOpacity: 0, justifyContent: 'center' }
             ]}>
                {!(activeModal === 'Sklep' || activeModal === 'Plecak') && (
                <Text style={{
@@ -966,6 +966,7 @@ export default function App() {
                    <MaterialCommunityIcons name="history" size={32} color="#FFF" style={{ opacity: 0.9 }} />
                  </TouchableOpacity>
                )}
+               {!(activeModal === 'Sklep' || activeModal === 'Plecak') && (
                <TouchableOpacity
                  onPress={() => setActiveModal(null)}
                  style={
@@ -976,6 +977,7 @@ export default function App() {
                >
                   <Text style={{ color: 'white', fontSize: 14 }}>❌</Text>
                </TouchableOpacity>
+               )}
 
                {activeModal === 'Czat' ? (
                  <>
@@ -1085,7 +1087,10 @@ export default function App() {
                    </KeyboardAvoidingView>
                  </>
                ) : activeModal === 'Sklep' ? (
-                 <View style={{ width: '92%', maxHeight: '80%', backgroundColor: '#F8F9FA', borderRadius: 25, padding: 20, alignSelf: 'center', marginTop: '15%', elevation: 10, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 10 }}>
+                 <View style={{ width: '92%', maxHeight: '70%', backgroundColor: '#F8F9FA', borderRadius: 25, padding: 20, elevation: 10, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 10 }}>
+                   <TouchableOpacity onPress={() => setActiveModal(null)} style={{ position: 'absolute', top: 15, right: 15, zIndex: 10 }}>
+                      <Text style={{ fontSize: 20, color: '#000' }}>❌</Text>
+                   </TouchableOpacity>
                    <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center', color: '#000' }}>Sklep</Text>
                    {/* Tabs */}
                    <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginBottom: 10 }}>
@@ -1151,7 +1156,10 @@ export default function App() {
                    )}
                  </View>
                ) : activeModal === 'Plecak' ? (
-                 <View style={{ width: '92%', maxHeight: '80%', backgroundColor: '#F8F9FA', borderRadius: 25, padding: 20, alignSelf: 'center', marginTop: '15%', elevation: 10, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 10 }}>
+                 <View style={{ width: '92%', maxHeight: '70%', backgroundColor: '#F8F9FA', borderRadius: 25, padding: 20, elevation: 10, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 10 }}>
+                   <TouchableOpacity onPress={() => setActiveModal(null)} style={{ position: 'absolute', top: 15, right: 15, zIndex: 10 }}>
+                      <Text style={{ fontSize: 20, color: '#000' }}>❌</Text>
+                   </TouchableOpacity>
                    <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center', color: '#000' }}>Plecak</Text>
                    {/* Tabs */}
                    <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginBottom: 10 }}>
@@ -1503,11 +1511,30 @@ export default function App() {
          </View>
       )}
 
-      {/* Central Button */}
-      {actionMode === null && (
-        <TouchableOpacity onPress={() => setActiveModal(activeModal === 'Profil' ? null : 'Profil')} style={styles.centralButton}>
-          <Text style={{ fontSize: 30 }}>🐾</Text>
-        </TouchableOpacity>
+      {/* Main Menu Tiles (Replacing Central Button) */}
+      {actionMode === null && activeModal === null && (
+        <View style={{ position: 'absolute', bottom: 30, flexDirection: 'row', justifyContent: 'center', width: '100%', alignItems: 'center' }}>
+             {/* Feed */}
+             <TouchableOpacity style={{ width: 75, height: 75, backgroundColor: '#FFF', borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginHorizontal: 6, elevation: 5, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 4 }} onPress={() => setActionMode('feed')}>
+                <Text style={{fontSize: 30}}>🍖</Text>
+                <Text style={{fontSize: 10, fontWeight: 'bold', color: '#000', marginTop: 5}}>Nakarm</Text>
+             </TouchableOpacity>
+             {/* Play */}
+             <TouchableOpacity style={{ width: 75, height: 75, backgroundColor: '#FFF', borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginHorizontal: 6, elevation: 5, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 4 }} onPress={() => setActionMode('play')}>
+                <Text style={{fontSize: 30}}>⚽</Text>
+                <Text style={{fontSize: 10, fontWeight: 'bold', color: '#000', marginTop: 5}}>Baw się</Text>
+             </TouchableOpacity>
+             {/* Wash */}
+             <TouchableOpacity style={{ width: 75, height: 75, backgroundColor: '#FFF', borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginHorizontal: 6, elevation: 5, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 4 }} onPress={() => setActionMode('wash')}>
+                <Text style={{fontSize: 30}}>🧽</Text>
+                <Text style={{fontSize: 10, fontWeight: 'bold', color: '#000', marginTop: 5}}>Umyj</Text>
+             </TouchableOpacity>
+             {/* Sleep */}
+             <TouchableOpacity style={{ width: 75, height: 75, backgroundColor: '#FFF', borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginHorizontal: 6, elevation: 5, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 4 }} onPress={() => { setActionMode('sleep'); setIsSleeping(true); }}>
+                <Text style={{fontSize: 30}}>🌙</Text>
+                <Text style={{fontSize: 10, fontWeight: 'bold', color: '#000', marginTop: 5}}>Sen</Text>
+             </TouchableOpacity>
+        </View>
       )}
 
       {/* Cinematic Action UI (Feed, Play, Wash) */}
