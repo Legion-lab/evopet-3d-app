@@ -198,6 +198,9 @@ export default function App() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [apiKey, setApiKey] = useState('');
   const [apiProvider, setApiProvider] = useState('openai');
+  const [isApiKeyVisible, setIsApiKeyVisible] = useState(false);
+  const [activeBubble, setActiveBubble] = useState(null);
+  const [showChatHistory, setShowChatHistory] = useState(false);
 
   useEffect(() => {
     gameOverRef.current = isGameOver;
@@ -480,10 +483,13 @@ export default function App() {
 
       // T-28: AI Logic Verified
       callPetAI(userText, contextData, apiKey, apiProvider, isSleeping).then((response) => {
+        const replyText = response.reply;
         setMessages((prev) => [...prev, {
           sender: 'pet',
-          text: response.reply
+          text: replyText
         }]);
+        setActiveBubble(replyText);
+        setTimeout(() => setActiveBubble(null), 6000);
 
         if (response.action === 'jump') {
           isJumpingRef.current = true;
@@ -896,8 +902,16 @@ export default function App() {
                  fontWeight: 'bold',
                  marginBottom: 20
                }}>
-                 {activeModal === 'Ustawienia' ? 'Ustawienia' : activeModal === 'Profil' ? 'Profil Pupila' : `Witaj w: ${activeModal}`}
+                 {activeModal === 'Ustawienia' ? 'Ustawienia' : activeModal === 'Profil' ? 'Profil Pupila' : activeModal}
                </Text>
+               {activeModal === 'Czat' && (
+                 <TouchableOpacity
+                   onPress={() => setShowChatHistory(!showChatHistory)}
+                   style={{ position: 'absolute', top: 60, right: 80, zIndex: 100, padding: 10, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 20 }}
+                 >
+                   <Text style={{ color: 'white', fontSize: 14 }}>📜 Historia</Text>
+                 </TouchableOpacity>
+               )}
                <TouchableOpacity
                  onPress={() => setActiveModal(null)}
                  style={
@@ -915,47 +929,73 @@ export default function App() {
                    <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.3)' }} />
 
                    {/* Bubble Display */}
-                   {(() => {
-                      const lastPetMessage = messages.slice().reverse().find(m => m.sender === 'pet');
-                      if (lastPetMessage) {
-                        return (
-                          <View style={{
-                            position: 'absolute',
-                            top: '25%',
-                            alignSelf: 'center',
-                            zIndex: 10,
-                            alignItems: 'center',
-                            width: '100%'
-                          }}>
-                            <View style={{
-                              backgroundColor: '#FFF',
-                              padding: 20,
-                              borderRadius: 20,
-                              maxWidth: '80%',
-                              elevation: 5
-                            }}>
-                              <Text style={{ fontSize: 18, color: '#000', textAlign: 'center' }}>{lastPetMessage.text}</Text>
-                            </View>
-                            {/* Tail */}
-                            <View style={{
-                              width: 0,
-                              height: 0,
-                              backgroundColor: 'transparent',
-                              borderStyle: 'solid',
-                              borderLeftWidth: 10,
-                              borderRightWidth: 10,
-                              borderBottomWidth: 0,
-                              borderTopWidth: 15,
-                              borderLeftColor: 'transparent',
-                              borderRightColor: 'transparent',
-                              borderTopColor: '#FFF',
-                              marginTop: -1
-                            }} />
-                          </View>
-                        );
-                      }
-                      return null;
-                   })()}
+                   {activeBubble && (
+                      <View style={{
+                        position: 'absolute',
+                        top: '25%',
+                        alignSelf: 'center',
+                        zIndex: 10,
+                        alignItems: 'center',
+                        width: '100%'
+                      }}>
+                        <View style={{
+                          backgroundColor: '#FFF',
+                          padding: 20,
+                          borderRadius: 20,
+                          maxWidth: '80%',
+                          elevation: 5
+                        }}>
+                          <Text style={{ fontSize: 18, color: '#000', textAlign: 'center' }}>{activeBubble}</Text>
+                        </View>
+                        {/* Tail */}
+                        <View style={{
+                          width: 0,
+                          height: 0,
+                          backgroundColor: 'transparent',
+                          borderStyle: 'solid',
+                          borderLeftWidth: 10,
+                          borderRightWidth: 10,
+                          borderBottomWidth: 0,
+                          borderTopWidth: 15,
+                          borderLeftColor: 'transparent',
+                          borderRightColor: 'transparent',
+                          borderTopColor: '#FFF',
+                          marginTop: -1
+                        }} />
+                      </View>
+                   )}
+
+                   {/* History Overlay */}
+                   {showChatHistory && (
+                     <View style={{
+                       position: 'absolute',
+                       top: 120,
+                       bottom: 150,
+                       left: 20,
+                       right: 20,
+                       backgroundColor: 'rgba(0,0,0,0.8)',
+                       borderRadius: 20,
+                       padding: 15,
+                       zIndex: 50
+                     }}>
+                       <Text style={{ color: 'white', textAlign: 'center', marginBottom: 10, fontWeight: 'bold' }}>Ostatnie wiadomości</Text>
+                       <ScrollView>
+                         {messages.slice(-8).map((msg, index) => (
+                           <View key={index} style={{ marginBottom: 10, alignItems: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
+                             <Text style={{ color: msg.sender === 'user' ? '#AAA' : '#4CAF50', fontSize: 10 }}>{msg.sender === 'user' ? 'Ty' : 'Bobas'}</Text>
+                             <View style={{
+                               backgroundColor: msg.sender === 'user' ? '#444' : '#FFF',
+                               padding: 10,
+                               borderRadius: 10,
+                               marginTop: 2
+                             }}>
+                               <Text style={{ color: msg.sender === 'user' ? 'white' : 'black' }}>{msg.text}</Text>
+                             </View>
+                           </View>
+                         ))}
+                       </ScrollView>
+                     </View>
+                   )}
 
                    {/* Input Area */}
                    <KeyboardAvoidingView
@@ -988,115 +1028,43 @@ export default function App() {
                  <View style={{ height: 220, width: '100%', justifyContent: 'center' }}>
                    <View style={{ height: 200, width: '100%' }}>
                      <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 20 }}>
-                       <View style={{ width: 130, height: 170, marginHorizontal: 10, borderRadius: 15, backgroundColor: '#FFF', elevation: 4, padding: 10, alignItems: 'center', justifyContent: 'space-between' }}>
-                         <Text style={{ color: 'black', fontSize: 12, textAlign: 'center', fontWeight: 'bold' }}>Przekąska</Text>
-                         <Text style={{ fontSize: 50 }}>🍎</Text>
+                       {[
+                         {
+                           id: 'snack', name: 'Przekąska', price: 5, stats: 'Głód +20', icon: '🍎',
+                           action: () => { setCoins(prev => prev - 5); setInventory(prev => ({ ...prev, snack: prev.snack + 1 })); }
+                         },
+                         {
+                           id: 'dinner', name: 'Pełny Obiad', price: 10, stats: 'Głód +50', icon: '🍱',
+                           action: () => { setCoins(prev => prev - 10); setInventory(prev => ({ ...prev, dinner: prev.dinner + 1 })); }
+                         },
+                         {
+                           id: 'coffee', name: 'Kawa', price: 15, stats: 'Energia +40', icon: '☕',
+                           action: () => { setCoins(prev => prev - 15); setInventory(prev => ({ ...prev, coffee: prev.coffee + 1 })); }
+                         },
+                         {
+                           id: 'hungerBuster', name: 'Buster Głodu', price: 50, stats: 'Głód 100%, Ochrona 12h', icon: '🛡️',
+                           action: () => { setCoins(prev => prev - 50); setInventory(prev => ({ ...prev, hungerBuster: prev.hungerBuster + 1 })); }
+                         },
+                         {
+                           id: 'energyBuster', name: 'Buster Energii', price: 50, stats: 'Energia 100%, Ochrona 12h', icon: '⚡',
+                           action: () => { setCoins(prev => prev - 50); setInventory(prev => ({ ...prev, energyBuster: prev.energyBuster + 1 })); }
+                         }
+                       ].map((item) => (
                          <TouchableOpacity
-                           delayPressIn={100}
-                           style={{ backgroundColor: '#4CAF50', padding: 8, borderRadius: 5, width: '100%', alignItems: 'center' }}
-                           onPress={() => setInspectedItem({
-                             id: 'snack',
-                             name: 'Przekąska',
-                             price: 5,
-                             stats: 'Głód +20',
-                             icon: '🍎',
-                             action: () => {
-                               setCoins(prev => prev - 5);
-                               setInventory(prev => ({ ...prev, snack: prev.snack + 1 }));
-                             }
-                           })}
+                           key={item.id}
+                           delayPressIn={150}
+                           style={{ width: 130, height: 170, marginHorizontal: 10, borderRadius: 15, backgroundColor: '#FFF', elevation: 4, padding: 10, alignItems: 'center', justifyContent: 'space-between' }}
+                           onPress={() => setInspectedItem(item)}
                          >
-                           <Text style={{ color: 'white', fontWeight: 'bold' }}>🪙 5</Text>
+                           <Text style={{ color: 'black', fontSize: 12, textAlign: 'center', fontWeight: 'bold' }}>{item.name}</Text>
+                           <Text style={{ fontSize: 50 }}>{item.icon}</Text>
+                           <View
+                             style={{ backgroundColor: '#4CAF50', padding: 8, borderRadius: 5, width: '100%', alignItems: 'center' }}
+                           >
+                             <Text style={{ color: 'white', fontWeight: 'bold' }}>🪙 {item.price}</Text>
+                           </View>
                          </TouchableOpacity>
-                       </View>
-
-                       <View style={{ width: 130, height: 170, marginHorizontal: 10, borderRadius: 15, backgroundColor: '#FFF', elevation: 4, padding: 10, alignItems: 'center', justifyContent: 'space-between' }}>
-                         <Text style={{ color: 'black', fontSize: 12, textAlign: 'center', fontWeight: 'bold' }}>Pełny Obiad</Text>
-                         <Text style={{ fontSize: 50 }}>🍱</Text>
-                         <TouchableOpacity
-                           delayPressIn={100}
-                           style={{ backgroundColor: '#4CAF50', padding: 8, borderRadius: 5, width: '100%', alignItems: 'center' }}
-                           onPress={() => setInspectedItem({
-                             id: 'dinner',
-                             name: 'Pełny Obiad',
-                             price: 10,
-                             stats: 'Głód +50',
-                             icon: '🍱',
-                             action: () => {
-                               setCoins(prev => prev - 10);
-                               setInventory(prev => ({ ...prev, dinner: prev.dinner + 1 }));
-                             }
-                           })}
-                         >
-                           <Text style={{ color: 'white', fontWeight: 'bold' }}>🪙 10</Text>
-                         </TouchableOpacity>
-                       </View>
-
-                       <View style={{ width: 130, height: 170, marginHorizontal: 10, borderRadius: 15, backgroundColor: '#FFF', elevation: 4, padding: 10, alignItems: 'center', justifyContent: 'space-between' }}>
-                         <Text style={{ color: 'black', fontSize: 12, textAlign: 'center', fontWeight: 'bold' }}>Kawa</Text>
-                         <Text style={{ fontSize: 50 }}>☕</Text>
-                         <TouchableOpacity
-                           delayPressIn={100}
-                           style={{ backgroundColor: '#4CAF50', padding: 8, borderRadius: 5, width: '100%', alignItems: 'center' }}
-                           onPress={() => setInspectedItem({
-                             id: 'coffee',
-                             name: 'Kawa',
-                             price: 15,
-                             stats: 'Energia +40',
-                             icon: '☕',
-                             action: () => {
-                               setCoins(prev => prev - 15);
-                               setInventory(prev => ({ ...prev, coffee: prev.coffee + 1 }));
-                             }
-                           })}
-                         >
-                           <Text style={{ color: 'white', fontWeight: 'bold' }}>🪙 15</Text>
-                         </TouchableOpacity>
-                       </View>
-
-                       <View style={{ width: 130, height: 170, marginHorizontal: 10, borderRadius: 15, backgroundColor: '#FFF', elevation: 4, padding: 10, alignItems: 'center', justifyContent: 'space-between' }}>
-                         <Text style={{ color: 'black', fontSize: 12, textAlign: 'center', fontWeight: 'bold' }}>Buster Głodu 12h</Text>
-                         <Text style={{ fontSize: 50 }}>🛡️</Text>
-                         <TouchableOpacity
-                           delayPressIn={100}
-                           style={{ backgroundColor: '#4CAF50', padding: 8, borderRadius: 5, width: '100%', alignItems: 'center' }}
-                           onPress={() => setInspectedItem({
-                             id: 'hungerBuster',
-                             name: 'Buster Głodu',
-                             price: 50,
-                             stats: 'Głód 100%, Ochrona 12h',
-                             icon: '🛡️',
-                             action: () => {
-                               setCoins(prev => prev - 50);
-                               setInventory(prev => ({ ...prev, hungerBuster: prev.hungerBuster + 1 }));
-                             }
-                           })}
-                         >
-                           <Text style={{ color: 'white', fontWeight: 'bold' }}>🪙 50</Text>
-                         </TouchableOpacity>
-                       </View>
-
-                       <View style={{ width: 130, height: 170, marginHorizontal: 10, borderRadius: 15, backgroundColor: '#FFF', elevation: 4, padding: 10, alignItems: 'center', justifyContent: 'space-between' }}>
-                         <Text style={{ color: 'black', fontSize: 12, textAlign: 'center', fontWeight: 'bold' }}>Buster Energii 12h</Text>
-                         <Text style={{ fontSize: 50 }}>⚡</Text>
-                         <TouchableOpacity
-                           delayPressIn={100}
-                           style={{ backgroundColor: '#4CAF50', padding: 8, borderRadius: 5, width: '100%', alignItems: 'center' }}
-                           onPress={() => setInspectedItem({
-                             id: 'energyBuster',
-                             name: 'Buster Energii',
-                             price: 50,
-                             stats: 'Energia 100%, Ochrona 12h',
-                             icon: '⚡',
-                             action: () => {
-                               setCoins(prev => prev - 50);
-                               setInventory(prev => ({ ...prev, energyBuster: prev.energyBuster + 1 }));
-                             }
-                           })}
-                         >
-                           <Text style={{ color: 'white', fontWeight: 'bold' }}>🪙 50</Text>
-                         </TouchableOpacity>
-                       </View>
+                       ))}
                      </ScrollView>
                    </View>
                    {inspectedItem && (
@@ -1409,21 +1377,29 @@ export default function App() {
                            </TouchableOpacity>
                          </View>
 
-                         <TextInput
-                           style={{
-                             borderWidth: 1,
-                             borderColor: '#EEE',
-                             borderRadius: 8,
-                             padding: 10,
-                             color: '#000',
-                             marginBottom: 10
-                           }}
-                           placeholder={apiProvider === 'openai' ? "Wklej klucz OpenAI API" : "Wklej klucz Google Gemini API"}
-                           placeholderTextColor="#aaa"
-                           value={apiKey}
-                           onChangeText={setApiKey}
-                           secureTextEntry={true}
-                         />
+                         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                            <TextInput
+                              style={{
+                                flex: 1,
+                                borderWidth: 1,
+                                borderColor: '#EEE',
+                                borderRadius: 8,
+                                padding: 10,
+                                color: '#000'
+                              }}
+                              placeholder={apiProvider === 'openai' ? "Wklej klucz OpenAI API" : "Wklej klucz Google Gemini API"}
+                              placeholderTextColor="#aaa"
+                              value={apiKey}
+                              onChangeText={setApiKey}
+                              secureTextEntry={!isApiKeyVisible}
+                            />
+                            <TouchableOpacity
+                               onPress={() => setIsApiKeyVisible(!isApiKeyVisible)}
+                               style={{ marginLeft: 10, padding: 10, backgroundColor: '#EEE', borderRadius: 8 }}
+                            >
+                               <Text style={{ fontSize: 12 }}>{isApiKeyVisible ? '🙈 Ukryj' : '👁️ Pokaż'}</Text>
+                            </TouchableOpacity>
+                         </View>
 
                          <TouchableOpacity
                            style={{
@@ -1475,7 +1451,7 @@ export default function App() {
 
       {/* Central Button */}
       {!isFeedingMode && (
-        <TouchableOpacity onPress={() => setActiveModal('Profil')} style={styles.centralButton}>
+        <TouchableOpacity onPress={() => setActiveModal(activeModal === 'Profil' ? null : 'Profil')} style={styles.centralButton}>
           <Text style={{ fontSize: 30 }}>🐾</Text>
         </TouchableOpacity>
       )}
