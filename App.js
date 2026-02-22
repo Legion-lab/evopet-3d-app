@@ -899,7 +899,11 @@ export default function App() {
                </Text>
                <TouchableOpacity
                  onPress={() => setActiveModal(null)}
-                 style={[styles.closeButton, (activeModal === 'Ustawienia' || activeModal === 'Profil') && { backgroundColor: 'rgba(0,0,0,0.1)' }]}
+                 style={
+                    activeModal === 'Czat'
+                      ? { position: 'absolute', top: 60, right: 25, zIndex: 100, padding: 10, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 20 }
+                      : [styles.closeButton, (activeModal === 'Ustawienia' || activeModal === 'Profil') && { backgroundColor: 'rgba(0,0,0,0.1)' }]
+                 }
                >
                   <Text style={{ color: 'white', fontSize: 14 }}>❌</Text>
                </TouchableOpacity>
@@ -965,7 +969,7 @@ export default function App() {
                        backgroundColor: 'rgba(0,0,0,0.6)'
                      }}
                    >
-                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 100, marginHorizontal: 20 }}>
                        <TextInput
                          style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.9)', color: '#000', padding: 12, borderRadius: 20, marginRight: 10 }}
                          value={inputText}
