@@ -26,11 +26,26 @@ const renderIcon = (icon) => {
   return <Text style={{ fontSize: 50 }}>{icon}</Text>;
 };
 
-const callPetAI = async (userMessage, contextData, key, provider, isSleeping) => {
+const callPetAI = async (userMessage, contextData, key, provider, isSleeping, chatHistory) => {
   if (isSleeping) { return { reply: "zzZZzzzZZzz...", action: "none" }; }
   if (!key || key.trim() === '') {
     return { reply: "Musisz wpisać klucz API w Ustawieniach!", action: "none" };
   }
+
+  // T-47: Dynamic State Matrix
+  const { hunger, energy, hygiene } = contextData.stats;
+  const { laziness, intelligence, bond } = contextData.rpg_stats;
+
+  const hungerState = hunger > 80 ? 'Jesteś potwornie głodny i zły.' : (hunger < 30 ? 'Jesteś najedzony do syta.' : 'Jesteś lekko głodny.');
+  const energyState = energy < 30 ? 'Badasz z wyczerpania, marzysz o śnie.' : 'Rozpiera cię energia.';
+  const hygieneState = hygiene < 30 ? 'Śmierdzisz i czujesz się z tym fatalnie.' : 'Pachniesz czystością.';
+  const lazinessState = laziness > 60 ? 'Jesteś potwornie leniwy, nie chce ci się ruszać.' : 'Jesteś bardzo aktywny.';
+  const intState = intelligence > 60 ? 'Wypowiadasz się mądrze, używasz trudnych słów.' : 'Jesteś raczej prostolinijny i mało bystry.';
+  const bondState = bond > 60 ? `Uwielbiasz swojego właściciela ${contextData.user_name}.` : 'Jesteś zdystansowany i nieufny wobec właściciela.';
+
+  const systemInstructionText = `Jesteś wirtualnym zwierzakiem. Jesteś w fazie: Nastolatek. Twoje parametry to: ${hungerState} ${energyState} ${hygieneState} ${lazinessState} ${intState} ${bondState}
+Zasada 1: Twoja odpowiedź musi być krótka. Maksymalnie 2 zdania. Musi zmieścić się w małym dymku komiksowym (max 120 znaków).
+Zasada 2: ZAWSZE zwracaj odpowiedź jako czysty JSON w formacie: {"reply": "twój krótki tekst", "action": "nazwa_animacji_lub_none"}.`;
 
   try {
     if (provider === 'openai') {
@@ -45,7 +60,7 @@ const callPetAI = async (userMessage, contextData, key, provider, isSleeping) =>
           messages: [
             {
               role: "system",
-              content: "Jesteś wirtualnym zwierzakiem. Właściciel: " + contextData.userName + ". Statystyki: Głód " + contextData.hunger + "/100, Energia " + contextData.energy + "/100. Odpowiadaj krótko i z humorem. MUSISZ zwrócić TYLKO poprawny JSON: { \"reply\": \"tekst\", \"action\": \"none\" lub \"jump\" }. Użyj 'jump' gdy jesteś radosny."
+              content: systemInstructionText + " Właściciel: " + contextData.user_name
             },
             {
               role: "user",
@@ -72,19 +87,24 @@ const callPetAI = async (userMessage, contextData, key, provider, isSleeping) =>
         return { reply: "Coś poszło nie tak z moim mózgiem...", action: "none" };
       }
     } else if (provider === 'gemini') {
+      // T-47: History Injection
+      const contentsArray = chatHistory ? chatHistory.slice(-6).map(msg => ({
+        role: msg.sender === 'pet' ? 'model' : 'user',
+        parts: [{ text: msg.text }]
+      })) : [];
+
+      contentsArray.push({ role: 'user', parts: [{ text: userMessage }] });
+
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          contents: [{
-            role: 'user',
-            parts: [{ text: userMessage }]
-          }],
+          contents: contentsArray,
           systemInstruction: {
             parts: [{
-              text: "Jesteś wirtualnym zwierzakiem. Właściciel: " + contextData.userName + ". Statystyki: Głód " + contextData.hunger + ", Energia " + contextData.energy + ". Zwróć JSON: { \"reply\": \"tekst\", \"action\": \"none\"|\"jump\" }"
+              text: systemInstructionText
             }]
           },
           generationConfig: {
@@ -95,11 +115,15 @@ const callPetAI = async (userMessage, contextData, key, provider, isSleeping) =>
 
       const data = await response.json();
 
+      // T-47: Robust Sanitization
       if (data.candidates && data.candidates.length > 0) {
         let content = data.candidates[0].content.parts[0].text;
-        content = content.replace(/```json/g, '').replace(/```/g, '').trim();
+        let cleanText = content.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const match = cleanText.match(/\{[\s\S]*\}/);
+        if (match) cleanText = match[0];
+
         try {
-          const parsed = JSON.parse(content);
+          const parsed = JSON.parse(cleanText);
           return parsed;
         } catch (parseError) {
            console.error("AI Parse Error:", parseError);
@@ -519,7 +543,7 @@ export default function App() {
       };
 
       // T-28: AI Logic Verified
-      callPetAI(userText, contextData, apiKey, apiProvider, isSleeping).then((response) => {
+      callPetAI(userText, contextData, apiKey, apiProvider, isSleeping, messages).then((response) => {
         const replyText = response.reply;
         setMessages((prev) => [...prev, {
           sender: 'pet',
