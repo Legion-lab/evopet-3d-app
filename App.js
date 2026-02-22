@@ -8,6 +8,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const { width, height } = Dimensions.get('window');
 
 const callPetAI = async (userMessage, contextData, key, provider) => {
+  if (contextData.isSleeping) {
+    return { reply: "zzZZzzzZZzz...", action: "none" };
+  }
+
   if (!key || key.trim() === '') {
     return { reply: "Musisz wpisać klucz API w Ustawieniach!", action: "none" };
   }
@@ -474,6 +478,7 @@ export default function App() {
         stats: { hunger, energy, happiness, hygiene },
         inventory,
         rpg_stats: { strength, intelligence, laziness, bond, fitness },
+        isSleeping,
         message: userText
       };
 
@@ -985,13 +990,14 @@ export default function App() {
                  </>
                ) : activeModal === 'Sklep' ? (
                  <View style={{ height: 220, width: '100%', justifyContent: 'center' }}>
-                   <View style={{ height: 160, width: '100%' }}>
+                   <View style={{ height: 200, width: '100%' }}>
                      <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 20 }}>
-                       <View style={{ width: 120, height: 140, marginHorizontal: 10, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5, borderWidth: 2, borderColor: '#666' }}>
-                         <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Przekąska</Text>
-                         <Text style={{ fontSize: 50 }}>🍎</Text>
+                       <View style={{ width: 130, height: 170, marginHorizontal: 10, backgroundColor: '#FFF', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 4 }}>
+                         <Text style={{ color: 'black', fontSize: 16, fontWeight: 'bold', textAlign: 'center' }}>Przekąska</Text>
+                         <Text style={{ fontSize: 65 }}>🍎</Text>
                          <TouchableOpacity
-                           style={{ backgroundColor: '#4CAF50', padding: 8, borderRadius: 5, width: '100%', alignItems: 'center' }}
+                           delayPressIn={100}
+                           style={{ backgroundColor: '#4CAF50', padding: 8, borderRadius: 10, width: '100%', alignItems: 'center' }}
                            onPress={() => setInspectedItem({
                              id: 'snack',
                              name: 'Przekąska',
@@ -1008,11 +1014,12 @@ export default function App() {
                          </TouchableOpacity>
                        </View>
 
-                       <View style={{ width: 120, height: 140, marginHorizontal: 10, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5, borderWidth: 2, borderColor: '#666' }}>
-                         <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Pełny Obiad</Text>
-                         <Text style={{ fontSize: 50 }}>🍱</Text>
+                       <View style={{ width: 130, height: 170, marginHorizontal: 10, backgroundColor: '#FFF', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 4 }}>
+                         <Text style={{ color: 'black', fontSize: 16, fontWeight: 'bold', textAlign: 'center' }}>Pełny Obiad</Text>
+                         <Text style={{ fontSize: 65 }}>🍱</Text>
                          <TouchableOpacity
-                           style={{ backgroundColor: '#4CAF50', padding: 8, borderRadius: 5, width: '100%', alignItems: 'center' }}
+                           delayPressIn={100}
+                           style={{ backgroundColor: '#4CAF50', padding: 8, borderRadius: 10, width: '100%', alignItems: 'center' }}
                            onPress={() => setInspectedItem({
                              id: 'dinner',
                              name: 'Pełny Obiad',
@@ -1029,11 +1036,12 @@ export default function App() {
                          </TouchableOpacity>
                        </View>
 
-                       <View style={{ width: 120, height: 140, marginHorizontal: 10, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5, borderWidth: 2, borderColor: '#666' }}>
-                         <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Kawa</Text>
-                         <Text style={{ fontSize: 50 }}>☕</Text>
+                       <View style={{ width: 130, height: 170, marginHorizontal: 10, backgroundColor: '#FFF', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 4 }}>
+                         <Text style={{ color: 'black', fontSize: 16, fontWeight: 'bold', textAlign: 'center' }}>Kawa</Text>
+                         <Text style={{ fontSize: 65 }}>☕</Text>
                          <TouchableOpacity
-                           style={{ backgroundColor: '#4CAF50', padding: 8, borderRadius: 5, width: '100%', alignItems: 'center' }}
+                           delayPressIn={100}
+                           style={{ backgroundColor: '#4CAF50', padding: 8, borderRadius: 10, width: '100%', alignItems: 'center' }}
                            onPress={() => setInspectedItem({
                              id: 'coffee',
                              name: 'Kawa',
@@ -1050,11 +1058,12 @@ export default function App() {
                          </TouchableOpacity>
                        </View>
 
-                       <View style={{ width: 120, height: 140, marginHorizontal: 10, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5, borderWidth: 2, borderColor: '#666' }}>
-                         <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Buster Głodu 12h</Text>
-                         <Text style={{ fontSize: 50 }}>🛡️</Text>
+                       <View style={{ width: 130, height: 170, marginHorizontal: 10, backgroundColor: '#FFF', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 4 }}>
+                         <Text style={{ color: 'black', fontSize: 16, fontWeight: 'bold', textAlign: 'center' }}>Buster Głodu</Text>
+                         <Text style={{ fontSize: 65 }}>🛡️</Text>
                          <TouchableOpacity
-                           style={{ backgroundColor: '#4CAF50', padding: 8, borderRadius: 5, width: '100%', alignItems: 'center' }}
+                           delayPressIn={100}
+                           style={{ backgroundColor: '#4CAF50', padding: 8, borderRadius: 10, width: '100%', alignItems: 'center' }}
                            onPress={() => setInspectedItem({
                              id: 'hungerBuster',
                              name: 'Buster Głodu',
@@ -1071,11 +1080,12 @@ export default function App() {
                          </TouchableOpacity>
                        </View>
 
-                       <View style={{ width: 120, height: 140, marginHorizontal: 10, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5, borderWidth: 2, borderColor: '#666' }}>
-                         <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Buster Energii 12h</Text>
-                         <Text style={{ fontSize: 50 }}>⚡</Text>
+                       <View style={{ width: 130, height: 170, marginHorizontal: 10, backgroundColor: '#FFF', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 4 }}>
+                         <Text style={{ color: 'black', fontSize: 16, fontWeight: 'bold', textAlign: 'center' }}>Buster Energii</Text>
+                         <Text style={{ fontSize: 65 }}>⚡</Text>
                          <TouchableOpacity
-                           style={{ backgroundColor: '#4CAF50', padding: 8, borderRadius: 5, width: '100%', alignItems: 'center' }}
+                           delayPressIn={100}
+                           style={{ backgroundColor: '#4CAF50', padding: 8, borderRadius: 10, width: '100%', alignItems: 'center' }}
                            onPress={() => setInspectedItem({
                              id: 'energyBuster',
                              name: 'Buster Energii',
@@ -1125,37 +1135,37 @@ export default function App() {
                  </View>
                ) : activeModal === 'Plecak' ? (
                  <View style={{ height: 220, width: '100%', justifyContent: 'center' }}>
-                   <View style={{ height: 160, width: '100%' }}>
+                   <View style={{ height: 200, width: '100%' }}>
                      <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 20 }}>
-                       <View style={{ width: 120, height: 140, marginHorizontal: 10, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5, borderWidth: 2, borderColor: '#666' }}>
-                         <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Przekąska</Text>
-                         <Text style={{ fontSize: 50 }}>🍎</Text>
-                         <Text style={{ color: '#aaa', fontWeight: 'bold' }}>Posiadasz: {inventory.snack}</Text>
-                       </View>
+                       <TouchableOpacity activeOpacity={1} delayPressIn={100} style={{ width: 130, height: 170, marginHorizontal: 10, backgroundColor: '#FFF', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 4 }}>
+                         <Text style={{ color: 'black', fontSize: 16, fontWeight: 'bold', textAlign: 'center' }}>Przekąska</Text>
+                         <Text style={{ fontSize: 65 }}>🍎</Text>
+                         <Text style={{ color: '#555', fontWeight: 'bold' }}>Posiadasz: {inventory.snack}</Text>
+                       </TouchableOpacity>
 
-                       <View style={{ width: 120, height: 140, marginHorizontal: 10, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5, borderWidth: 2, borderColor: '#666' }}>
-                         <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Obiad</Text>
-                         <Text style={{ fontSize: 50 }}>🍱</Text>
-                         <Text style={{ color: '#aaa', fontWeight: 'bold' }}>Posiadasz: {inventory.dinner}</Text>
-                       </View>
+                       <TouchableOpacity activeOpacity={1} delayPressIn={100} style={{ width: 130, height: 170, marginHorizontal: 10, backgroundColor: '#FFF', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 4 }}>
+                         <Text style={{ color: 'black', fontSize: 16, fontWeight: 'bold', textAlign: 'center' }}>Obiad</Text>
+                         <Text style={{ fontSize: 65 }}>🍱</Text>
+                         <Text style={{ color: '#555', fontWeight: 'bold' }}>Posiadasz: {inventory.dinner}</Text>
+                       </TouchableOpacity>
 
-                       <View style={{ width: 120, height: 140, marginHorizontal: 10, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5, borderWidth: 2, borderColor: '#666' }}>
-                         <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Kawa</Text>
-                         <Text style={{ fontSize: 50 }}>☕</Text>
-                         <Text style={{ color: '#aaa', fontWeight: 'bold' }}>Posiadasz: {inventory.coffee}</Text>
-                       </View>
+                       <TouchableOpacity activeOpacity={1} delayPressIn={100} style={{ width: 130, height: 170, marginHorizontal: 10, backgroundColor: '#FFF', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 4 }}>
+                         <Text style={{ color: 'black', fontSize: 16, fontWeight: 'bold', textAlign: 'center' }}>Kawa</Text>
+                         <Text style={{ fontSize: 65 }}>☕</Text>
+                         <Text style={{ color: '#555', fontWeight: 'bold' }}>Posiadasz: {inventory.coffee}</Text>
+                       </TouchableOpacity>
 
-                       <View style={{ width: 120, height: 140, marginHorizontal: 10, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5, borderWidth: 2, borderColor: '#666' }}>
-                         <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Buster Głodu 12h</Text>
-                         <Text style={{ fontSize: 50 }}>🛡️</Text>
-                         <Text style={{ color: '#aaa', fontWeight: 'bold' }}>Posiadasz: {inventory.hungerBuster}</Text>
-                       </View>
+                       <TouchableOpacity activeOpacity={1} delayPressIn={100} style={{ width: 130, height: 170, marginHorizontal: 10, backgroundColor: '#FFF', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 4 }}>
+                         <Text style={{ color: 'black', fontSize: 16, fontWeight: 'bold', textAlign: 'center' }}>Buster Głodu</Text>
+                         <Text style={{ fontSize: 65 }}>🛡️</Text>
+                         <Text style={{ color: '#555', fontWeight: 'bold' }}>Posiadasz: {inventory.hungerBuster}</Text>
+                       </TouchableOpacity>
 
-                       <View style={{ width: 120, height: 140, marginHorizontal: 10, backgroundColor: '#333', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 5, borderWidth: 2, borderColor: '#666' }}>
-                         <Text style={{ color: 'white', fontSize: 12, textAlign: 'center' }}>Buster Energii 12h</Text>
-                         <Text style={{ fontSize: 50 }}>⚡</Text>
-                         <Text style={{ color: '#aaa', fontWeight: 'bold' }}>Posiadasz: {inventory.energyBuster}</Text>
-                       </View>
+                       <TouchableOpacity activeOpacity={1} delayPressIn={100} style={{ width: 130, height: 170, marginHorizontal: 10, backgroundColor: '#FFF', borderRadius: 15, padding: 10, alignItems: 'center', justifyContent: 'space-between', elevation: 4 }}>
+                         <Text style={{ color: 'black', fontSize: 16, fontWeight: 'bold', textAlign: 'center' }}>Buster Energii</Text>
+                         <Text style={{ fontSize: 65 }}>⚡</Text>
+                         <Text style={{ color: '#555', fontWeight: 'bold' }}>Posiadasz: {inventory.energyBuster}</Text>
+                       </TouchableOpacity>
                      </ScrollView>
                    </View>
                  </View>
@@ -1242,7 +1252,10 @@ export default function App() {
 
                        {/* Action Buttons (Restored for Playability) */}
                        <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 20 }}>
-                          <TouchableOpacity onPress={() => { setActiveModal(null); setIsFeedingMode(true); }} style={{ alignItems: 'center' }}>
+                          <TouchableOpacity onPress={() => {
+                             if (isSleeping) { Alert.alert('Ciii...', 'Bobas teraz śpi. Zostaw go w spokoju!'); return; }
+                             setActiveModal(null); setIsFeedingMode(true);
+                          }} style={{ alignItems: 'center' }}>
                              <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#FF5252', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
                                 <Text style={{ fontSize: 24 }}>🍖</Text>
                              </View>
@@ -1256,14 +1269,20 @@ export default function App() {
                              <Text style={{ color: '#555', fontSize: 10, marginTop: 5, fontWeight: 'bold' }}>Sen</Text>
                           </TouchableOpacity>
 
-                          <TouchableOpacity onPress={() => { setActiveModal(null); setActiveActionSheet('hygiene'); }} style={{ alignItems: 'center' }}>
+                          <TouchableOpacity onPress={() => {
+                             if (isSleeping) { Alert.alert('Ciii...', 'Bobas teraz śpi. Zostaw go w spokoju!'); return; }
+                             setActiveModal(null); setActiveActionSheet('hygiene');
+                          }} style={{ alignItems: 'center' }}>
                              <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#2196F3', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
                                 <Text style={{ fontSize: 24 }}>🚿</Text>
                              </View>
                              <Text style={{ color: '#555', fontSize: 10, marginTop: 5, fontWeight: 'bold' }}>Umyj</Text>
                           </TouchableOpacity>
 
-                          <TouchableOpacity onPress={() => { setActiveModal(null); setActiveActionSheet('play'); }} style={{ alignItems: 'center' }}>
+                          <TouchableOpacity onPress={() => {
+                             if (isSleeping) { Alert.alert('Ciii...', 'Bobas teraz śpi. Zostaw go w spokoju!'); return; }
+                             setActiveModal(null); setActiveActionSheet('play');
+                          }} style={{ alignItems: 'center' }}>
                              <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#E91E63', justifyContent: 'center', alignItems: 'center', elevation: 3 }}>
                                 <Text style={{ fontSize: 24 }}>⚽</Text>
                              </View>
@@ -1616,6 +1635,7 @@ export default function App() {
                   style={[styles.tile, inventory.coffee <= 0 && { opacity: 0.5 }]}
                   disabled={inventory.coffee <= 0}
                   onPress={() => {
+                     if (isSleeping) { Alert.alert('Ciii...', 'Bobas teraz śpi. Zostaw go w spokoju!'); return; }
                      if (inventory.coffee > 0) {
                        setInventory(prev => ({ ...prev, coffee: prev.coffee - 1 }));
                        setEnergy(prev => Math.min(prev + 40, 100));
@@ -1650,6 +1670,7 @@ export default function App() {
                   style={[styles.tile, inventory.energyBuster <= 0 && { opacity: 0.5 }]}
                   disabled={inventory.energyBuster <= 0}
                   onPress={() => {
+                    if (isSleeping) { Alert.alert('Ciii...', 'Bobas teraz śpi. Zostaw go w spokoju!'); return; }
                     if (inventory.energyBuster > 0) {
                       setInventory(prev => ({ ...prev, energyBuster: prev.energyBuster - 1 }));
                       setEnergy(100);
