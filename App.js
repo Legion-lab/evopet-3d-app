@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, StyleSheet, Switch, Alert, Dimensions, PanResponder, TouchableWithoutFeedback, Platform } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { GLView } from 'expo-gl';
 import { Renderer } from 'expo-three';
 import * as THREE from 'three';
@@ -907,9 +908,9 @@ export default function App() {
                {activeModal === 'Czat' && (
                  <TouchableOpacity
                    onPress={() => setShowChatHistory(!showChatHistory)}
-                   style={{ position: 'absolute', top: 60, right: 80, zIndex: 100, padding: 10, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 20 }}
+                   style={{ position: 'absolute', top: 60, right: 80, zIndex: 100, padding: 10 }}
                  >
-                   <Text style={{ color: 'white', fontSize: 14 }}>📜 Historia</Text>
+                   <MaterialCommunityIcons name="history" size={32} color="#FFF" style={{ opacity: 0.9 }} />
                  </TouchableOpacity>
                )}
                <TouchableOpacity
@@ -969,11 +970,11 @@ export default function App() {
                    {showChatHistory && (
                      <View style={{
                        position: 'absolute',
-                       top: 120,
-                       bottom: 150,
+                       top: '20%',
                        left: 20,
                        right: 20,
-                       backgroundColor: 'rgba(0,0,0,0.8)',
+                       maxHeight: '60%',
+                       backgroundColor: 'rgba(0,0,0,0.85)',
                        borderRadius: 20,
                        padding: 15,
                        zIndex: 50
@@ -994,6 +995,12 @@ export default function App() {
                            </View>
                          ))}
                        </ScrollView>
+                       <TouchableOpacity
+                         onPress={() => setShowChatHistory(false)}
+                         style={{ alignItems: 'center', paddingVertical: 10, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.2)', marginTop: 10 }}
+                       >
+                         <MaterialCommunityIcons name="chevron-up" size={30} color="#FFF" />
+                       </TouchableOpacity>
                      </View>
                    )}
 
