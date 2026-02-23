@@ -1292,44 +1292,6 @@ export default function App() {
                           </View>
                        </View>
 
-                       {/* Action Buttons (Restored for Playability) */}
-                       <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 20 }}>
-                          <TouchableOpacity onPress={() => {
-                             if (isSleeping) { Alert.alert('Ciii...', 'Bobas teraz śpi. Zostaw go w spokoju!'); return; }
-                             setActiveModal(null);
-                             setActionMode('feed');
-                          }} style={{ width: 65, height: 65, backgroundColor: '#FFF', borderRadius: 16, justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 3 }}>
-                             <Text style={{ fontSize: 26 }}>🍖</Text>
-                             <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#000' }}>Nakarm</Text>
-                          </TouchableOpacity>
-
-                          <TouchableOpacity onPress={() => {
-                             setActiveModal(null);
-                             setActionMode('sleep');
-                             setIsSleeping(true);
-                          }} style={{ width: 65, height: 65, backgroundColor: '#FFF', borderRadius: 16, justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 3 }}>
-                             <Text style={{ fontSize: 26 }}>⚡</Text>
-                             <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#000' }}>Sen</Text>
-                          </TouchableOpacity>
-
-                          <TouchableOpacity onPress={() => {
-                             if (isSleeping) { Alert.alert('Ciii...', 'Bobas teraz śpi. Zostaw go w spokoju!'); return; }
-                             setActiveModal(null);
-                             setActionMode('wash');
-                          }} style={{ width: 65, height: 65, backgroundColor: '#FFF', borderRadius: 16, justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 3 }}>
-                             <Text style={{ fontSize: 26 }}>🚿</Text>
-                             <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#000' }}>Umyj</Text>
-                          </TouchableOpacity>
-
-                          <TouchableOpacity onPress={() => {
-                             if (isSleeping) { Alert.alert('Ciii...', 'Bobas teraz śpi. Zostaw go w spokoju!'); return; }
-                             setActiveModal(null);
-                             setActionMode('play');
-                          }} style={{ width: 65, height: 65, backgroundColor: '#FFF', borderRadius: 16, justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 3 }}>
-                             <Text style={{ fontSize: 26 }}>⚽</Text>
-                             <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#000' }}>Baw się</Text>
-                          </TouchableOpacity>
-                       </View>
                      </View>
                    ) : (
                      <View style={{ width: '100%', paddingHorizontal: 10, gap: 15 }}>
@@ -1378,6 +1340,45 @@ export default function App() {
                        </View>
                      </View>
                    )}
+
+                   {/* Action Buttons (Moved Outside) */}
+                   <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 20, width: '100%' }}>
+                      <TouchableOpacity onPress={() => {
+                         if (isSleeping) { Alert.alert('Ciii...', 'Bobas teraz śpi. Zostaw go w spokoju!'); return; }
+                         setActiveModal(null);
+                         setActionMode('feed');
+                      }} style={{ width: 65, height: 65, backgroundColor: '#FFF', borderRadius: 16, justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 3 }}>
+                         <Text style={{ fontSize: 26 }}>🍖</Text>
+                         <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#000' }}>Nakarm</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity onPress={() => {
+                         setActiveModal(null);
+                         setActionMode('sleep');
+                         setIsSleeping(true);
+                      }} style={{ width: 65, height: 65, backgroundColor: '#FFF', borderRadius: 16, justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 3 }}>
+                         <Text style={{ fontSize: 26 }}>⚡</Text>
+                         <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#000' }}>Sen</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity onPress={() => {
+                         if (isSleeping) { Alert.alert('Ciii...', 'Bobas teraz śpi. Zostaw go w spokoju!'); return; }
+                         setActiveModal(null);
+                         setActionMode('wash');
+                      }} style={{ width: 65, height: 65, backgroundColor: '#FFF', borderRadius: 16, justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 3 }}>
+                         <Text style={{ fontSize: 26 }}>🚿</Text>
+                         <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#000' }}>Umyj</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity onPress={() => {
+                         if (isSleeping) { Alert.alert('Ciii...', 'Bobas teraz śpi. Zostaw go w spokoju!'); return; }
+                         setActiveModal(null);
+                         setActionMode('play');
+                      }} style={{ width: 65, height: 65, backgroundColor: '#FFF', borderRadius: 16, justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 3 }}>
+                         <Text style={{ fontSize: 26 }}>⚽</Text>
+                         <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#000' }}>Baw się</Text>
+                      </TouchableOpacity>
+                   </View>
                  </View>
                ) : activeModal === 'Ustawienia' ? (
                  <View style={{ flex: 1, width: '100%' }}>
@@ -1529,26 +1530,9 @@ export default function App() {
 
       {/* Main Menu Tiles (Replacing Central Button) */}
       {actionMode === null && activeModal === null && (
-        <View style={{ position: 'absolute', bottom: 30, flexDirection: 'row', justifyContent: 'center', width: '100%', alignItems: 'center' }}>
-             {/* Feed */}
-             <TouchableOpacity style={{ width: 75, height: 75, backgroundColor: '#FFF', borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginHorizontal: 6, elevation: 5, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 4 }} onPress={() => setActionMode('feed')}>
-                <Text style={{fontSize: 30}}>🍖</Text>
-                <Text style={{fontSize: 10, fontWeight: 'bold', color: '#000', marginTop: 5}}>Nakarm</Text>
-             </TouchableOpacity>
-             {/* Play */}
-             <TouchableOpacity style={{ width: 75, height: 75, backgroundColor: '#FFF', borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginHorizontal: 6, elevation: 5, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 4 }} onPress={() => setActionMode('play')}>
-                <Text style={{fontSize: 30}}>⚽</Text>
-                <Text style={{fontSize: 10, fontWeight: 'bold', color: '#000', marginTop: 5}}>Baw się</Text>
-             </TouchableOpacity>
-             {/* Wash */}
-             <TouchableOpacity style={{ width: 75, height: 75, backgroundColor: '#FFF', borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginHorizontal: 6, elevation: 5, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 4 }} onPress={() => setActionMode('wash')}>
-                <Text style={{fontSize: 30}}>🧽</Text>
-                <Text style={{fontSize: 10, fontWeight: 'bold', color: '#000', marginTop: 5}}>Umyj</Text>
-             </TouchableOpacity>
-             {/* Sleep */}
-             <TouchableOpacity style={{ width: 75, height: 75, backgroundColor: '#FFF', borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginHorizontal: 6, elevation: 5, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 4 }} onPress={() => { setActionMode('sleep'); setIsSleeping(true); }}>
-                <Text style={{fontSize: 30}}>🌙</Text>
-                <Text style={{fontSize: 10, fontWeight: 'bold', color: '#000', marginTop: 5}}>Sen</Text>
+        <View style={{ position: 'absolute', bottom: 30, justifyContent: 'center', width: '100%', alignItems: 'center' }}>
+             <TouchableOpacity style={{ width: 80, height: 80, backgroundColor: '#007AFF', borderRadius: 40, justifyContent: 'center', alignItems: 'center', elevation: 8, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 5, marginBottom: 30 }} onPress={() => setActiveModal('Profil')}>
+                <MaterialCommunityIcons name="paw" size={40} color="#FFF" />
              </TouchableOpacity>
         </View>
       )}
